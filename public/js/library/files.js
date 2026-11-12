@@ -107,7 +107,9 @@ export function initFiles(L) {
         if (!S.sel.has(f.rel)) _pick(f.rel, {});
         L.drag = { type: 'files', root: S.root, rels: [...S.sel] };
         window.msDrag = { root: S.root, rels: [...S.sel] };
-        e.dataTransfer.effectAllowed = 'move';
+        // A folder of the tree MOVES what is dropped on it, the timeline COPIES it in: both must be allowed here, or
+        // Chromium refuses the timeline's drop without a word (its 'copy' is not among the allowed).
+        e.dataTransfer.effectAllowed = 'copyMove';
         e.dataTransfer.setData('application/x-ms-files', JSON.stringify(L.drag));
       });
       row.addEventListener('dragend', () => { L.drag = null; window.msDrag = null; });
