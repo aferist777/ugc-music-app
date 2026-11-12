@@ -341,11 +341,6 @@ function toggleMix(tag, group) {
   _saveMix();
 }
 
-/** The Mix as it stands - phase 3's Suno form takes it. */
-export function mixTags() {
-  return S.mix.slice();
-}
-
 // ── Start ───────────────────────────────────────────────────────────────────
 
 export async function initTags() {

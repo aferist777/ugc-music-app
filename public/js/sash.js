@@ -4,7 +4,7 @@
 import { remembered, remember } from './api.js';
 
 const LIB = { def: 280, min: 200, max: 560, workMin: 420 };
-const TL = { def: 160, min: 90, upperMin: 200 };
+const TL = { def: 190, min: 110, upperMin: 200 };
 const TREE = { def: 180, min: 60, filesMin: 120 };
 
 const root = document.documentElement;

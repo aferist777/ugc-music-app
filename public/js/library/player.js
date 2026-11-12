@@ -7,6 +7,7 @@
 
 import { api } from '../api.js';
 import { blocked } from '../layers.js';
+import { spaceOwner, setSpaceOwner } from '../space.js';
 import { showError } from '../notice.js';
 import { q, el, icon, clock, mediaUrl } from './common.js';
 
@@ -111,7 +112,7 @@ export function initPlayer() {
   window.addEventListener('resize', draw);
 
   document.addEventListener('keydown', (e) => {
-    if (e.code !== 'Space' || blocked(e) || !cur) return;
+    if (e.code !== 'Space' || blocked(e) || !cur || spaceOwner() !== 'library') return;
     // A button with the focus would take Space as its own press too.
     e.preventDefault();
     toggle();
@@ -132,7 +133,7 @@ export function initPlayer() {
     audio.src = mediaUrl(root, f.rel);
     _icon();
     draw();
-    if (play) audio.play().catch(() => {});
+    if (play) { setSpaceOwner('library'); audio.play().catch(() => {}); }
     try {
       const r = await api('/api/library/peaks?' + q({ root, rel: f.rel }));
       if (cur && cur.rel === f.rel && cur.root === root) {

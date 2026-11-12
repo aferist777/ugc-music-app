@@ -31,7 +31,7 @@ export async function refresh() {
   let landed = false;
   for (const j of jobs) {
     const was = known.get(j.id);
-    if (was === 'pending' && j.state !== 'pending' && j.kind === 'music' && j.results && j.results.length) landed = true;
+    if (was === 'pending' && j.state !== 'pending' && (j.kind === 'music' || j.kind === 'render') && j.results && j.results.length) landed = true;
     known.set(j.id, j.state);
   }
   if (landed) window.dispatchEvent(new CustomEvent('ms:library-changed'));

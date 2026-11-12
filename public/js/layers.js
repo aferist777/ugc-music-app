@@ -15,12 +15,12 @@ export function pushLayer(onEscape) {
 }
 
 /** True while a menu, a dialog or a viewer is open. */
-export function layerOpen() {
+function layerOpen() {
   return stack.length > 0;
 }
 
 /** True when a key press belongs to a field (or contenteditable), not to the page. */
-export function typing(e) {
+function typing(e) {
   const t = e && e.target;
   return !!t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
 }

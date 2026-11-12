@@ -6,7 +6,7 @@ import { pushLayer } from './layers.js';
 
 let current = null;
 
-export function closeMenu() {
+function closeMenu() {
   if (!current) return;
   const c = current;
   current = null;

@@ -25,6 +25,7 @@ function createApp() {
   app.use('/api', require('./routes/library'));
   app.use('/api', require('./routes/tags'));
   app.use('/api', require('./routes/music'));
+  app.use('/api', require('./routes/projects'));
   app.use('/api', (req, res) => res.status(404).json({ error: 'no such route' }));
   // The library's files by their address: /media/<root>/<folders>/<name> (ranges answered - the player seeks).
   for (const r of ROOTS) {
@@ -74,7 +75,7 @@ async function start({ port = 3310, tryNext = false } = {}) {
   throw new Error('no free port from ' + port + ' to ' + (port + 19));
 }
 
-module.exports = { start, createApp };
+module.exports = { start };
 
 if (require.main === module) {
   start({ port: +process.env.PORT || 3310 }).catch(e => {

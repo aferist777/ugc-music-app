@@ -11,7 +11,6 @@ export const thumbUrl = (root, f) => '/api/library/thumb?' + q({ root, rel: f.re
 
 export const parentRel = (rel) => String(rel).split('/').slice(0, -1).join('/');
 export const lastOf = (rel) => String(rel).split('/').pop();
-export const joinRel = (...p) => p.filter(Boolean).join('/');
 
 export function clock(s) {
   const t = Math.max(0, +s || 0);
@@ -38,6 +37,7 @@ const PATHS = {
   archive: '<rect x="2" y="3" width="12" height="3" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/>'
     + '<path d="M3 6v6.5c0 .6.4 1 1 1h8c.6 0 1-.4 1-1V6M6.5 9h3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
   folder: '<path d="M2 4.5c0-.6.4-1 1-1h3l1.5 1.5H13c.6 0 1 .4 1 1V12c0 .6-.4 1-1 1H3c-.6 0-1-.4-1-1z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
+  project: '<rect x="2" y="3.5" width="12" height="9" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2 7h12M5 3.5v3.5M9 7v5.5" fill="none" stroke="currentColor" stroke-width="1.4"/>',
   caret: '<path d="M6 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
   x: '<path d="M4 4l8 8m0-8l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
   play: '<path d="M4.5 2.5v11l9-5.5z" fill="currentColor"/>',

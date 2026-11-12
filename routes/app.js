@@ -1,11 +1,9 @@
 'use strict';
 
-// The shell's routes (phase 0): is the server alive and on which library, the keys (set or not - never a value), the
-// library's three roots.
+// The shell's routes (phase 0): is the server alive and on which library, the keys (set or not - never a value).
 
 const express = require('express');
-const fs = require('fs');
-const { LIBRARY_DIR, ROOTS, FAKE } = require('../lib/config');
+const { LIBRARY_DIR, FAKE } = require('../lib/config');
 const SETTINGS = require('../lib/settings');
 const { version } = require('../package.json');
 
@@ -21,12 +19,6 @@ router.get('/settings/keys', (req, res) => {
 
 router.put('/settings/keys', (req, res) => {
   res.json({ keys: SETTINGS.saveKeys(req.body) });
-});
-
-router.get('/library/roots', (req, res) => {
-  res.json({
-    roots: ROOTS.map(r => ({ id: r.id, label: r.label, exists: fs.existsSync(r.dir) })),
-  });
 });
 
 module.exports = router;

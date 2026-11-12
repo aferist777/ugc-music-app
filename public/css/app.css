@@ -23,8 +23,8 @@
   --font: "Segoe UI", system-ui, -apple-system, sans-serif;
   --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
   --r: 4px;
-  --top-h: 32px; --lib-w: 280px; --tl-h: 160px; --tree-h: 180px;
-  --tl-name-w: 70px; --tl-ruler-h: 18px; --tl-lane-h: 30px;
+  --top-h: 32px; --lib-w: 280px; --tl-h: 190px; --tree-h: 180px;
+  --tl-name-w: 64px; --tl-ruler-h: 18px; --tl-lane-h: 30px;
 }
 
 * { box-sizing: border-box; }
@@ -69,7 +69,6 @@ select.field { padding: 0 4px; }
 }
 .chip:hover { border-color: var(--muted); }
 .chip.is-on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.chip.is-static { cursor: default; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .hint { color: var(--faint); }
 .rename-input {
@@ -260,20 +259,47 @@ body.is-dragging-h { cursor: row-resize; }
 .mu-meta { flex: 0 0 auto; display: flex; justify-content: space-between; gap: 12px; padding: 0 12px 6px; color: var(--faint); }
 .mu-meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* ── Timeline ──────────────────────────────────────────── */
-.timeline { height: var(--tl-h); flex: 0 0 auto; display: flex; flex-direction: column; background: var(--bar); min-height: 90px; }
-.tl-head { height: 26px; flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-bottom: 1px solid var(--line); }
-.tl-time { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 48px; }
+/* ── Timeline (phase 4) ────────────────────────────────── */
+.timeline { height: var(--tl-h); flex: 0 0 auto; display: flex; background: var(--bar); min-height: 110px; }
+.tl-side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 6px; border-right: 1px solid var(--line); }
+.tl-preview { position: relative; flex: 0 0 auto; height: calc(var(--tl-h) - 38px); aspect-ratio: 16 / 9; background: #000; border-radius: 2px; overflow: hidden; cursor: zoom-in; }
+.tl-preview.is-916 { aspect-ratio: 9 / 16; }
+.tl-preview.is-big { position: fixed; z-index: 60; top: 50%; left: 50%; height: min(80vh, 900px); max-width: 92vw; transform: translate(-50%, -50%); cursor: zoom-out; box-shadow: var(--shadow); }
+.tl-dim { position: fixed; inset: 0; z-index: 59; background: var(--dim); }
+.tl-layer { position: absolute; inset: 0; }
+.tl-layer.is-v2 { z-index: 2; }
+.tl-layer video, .tl-layer img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tl-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.tl-head { height: 26px; flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 4px; border-bottom: 1px solid var(--line); }
+.tl-time { font-variant-numeric: tabular-nums; color: var(--muted); }
+.tl-name-p { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tl-spacer { flex: 1 1 auto; }
+.tl-head .hint { font-size: 11px; white-space: nowrap; }
 .tl-body { flex: 1 1 auto; min-height: 0; display: flex; overflow: auto; }
-.tl-names { width: var(--tl-name-w); flex: 0 0 auto; position: sticky; left: 0; z-index: 1; background: var(--bar); border-right: 1px solid var(--line); }
-.tl-name { height: var(--tl-lane-h); display: flex; align-items: center; padding: 0 10px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.tl-names { width: var(--tl-name-w); flex: 0 0 auto; position: sticky; left: 0; z-index: 3; background: var(--bar); border-right: 1px solid var(--line); }
+.tl-name { height: var(--tl-lane-h); display: flex; align-items: center; padding: 0 8px; color: var(--muted); border-bottom: 1px solid var(--line); white-space: nowrap; }
 .tl-name-ruler { height: var(--tl-ruler-h); }
-.tl-lanes { flex: 1 1 auto; min-width: 0; position: relative; }
-.tl-ruler { height: var(--tl-ruler-h); position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
-.tl-tick { position: absolute; top: 2px; font-size: 10px; color: var(--faint); transform: translateX(3px); font-variant-numeric: tabular-nums; }
+.tl-lanes { flex: 0 0 auto; min-width: 0; position: relative; user-select: none; }
+.tl-ruler { height: var(--tl-ruler-h); position: relative; overflow: hidden; border-bottom: 1px solid var(--line); cursor: text; }
+.tl-tick { position: absolute; top: 2px; font-size: 10px; color: var(--faint); transform: translateX(3px); font-variant-numeric: tabular-nums; pointer-events: none; }
 .tl-tick::before { content: ""; position: absolute; left: -3px; top: -2px; width: 1px; height: 18px; background: var(--line2); }
-.tl-lane { height: var(--tl-lane-h); border-bottom: 1px solid var(--line); }
+.tl-lane { position: relative; height: var(--tl-lane-h); border-bottom: 1px solid var(--line); }
+.tl-lane.is-drop { background: var(--sel); }
+.tl-playhead { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink); pointer-events: none; z-index: 2; }
+.tl-band { position: absolute; z-index: 4; border: 1px solid var(--muted); background: rgb(127 127 127 / .12); pointer-events: none; }
+.clip {
+  position: absolute; top: 3px; bottom: 3px; display: flex; align-items: center; gap: 4px; overflow: hidden;
+  border: 1px solid var(--line2); border-radius: 3px; background: var(--field); cursor: grab;
+}
+.clip::before, .clip::after { content: ""; position: absolute; top: 0; bottom: 0; width: 6px; cursor: ew-resize; z-index: 1; }
+.clip::before { left: 0; }
+.clip::after { right: 0; }
+.clip.is-sel { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.clip.is-missing { border-color: var(--danger); background: var(--danger-soft); }
+.clip-thumb { height: 100%; aspect-ratio: 1; object-fit: cover; flex: 0 0 auto; pointer-events: none; }
+.clip-wave { position: absolute; left: 0; top: 50%; transform: translateY(-50%); pointer-events: none; opacity: .7; }
+.clip-name { position: relative; padding: 0 5px; font-size: 11px; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+.clip.is-audio .clip-name { text-shadow: 0 0 3px var(--field), 0 0 3px var(--field); }
 
 /* ── Windows ───────────────────────────────────────────── */
 .overlay { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--dim); }

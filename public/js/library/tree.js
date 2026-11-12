@@ -8,20 +8,21 @@
 import { remembered, remember } from '../api.js';
 import { openMenu } from '../menu.js';
 import { showError } from '../notice.js';
-import { post, el, icon, joinRel, parentRel, lastOf } from './common.js';
+import { post, el, icon, parentRel, lastOf } from './common.js';
 
 const $ = (id) => document.getElementById(id);
 const key = (root, rel) => root + ':' + rel;
 
 export function initTree(L) {
   const host = $('lib-tree');
-  const unfolded = new Set(remembered().unfolded || [key('music', '')]);
+  const unfolded = new Set(remembered().unfolded || [key('projects', ''), key('music', '')]);
   let hoverTimer = null;
 
   const keep = () => remember({ unfolded: [...unfolded] });
 
   function paint() {
     host.textContent = '';
+    host.append(_projects());
     for (const r of L.S.roots) host.append(_node(r.id, '', r.label, r.folders || [], 0));
     mark();
   }
@@ -85,6 +86,105 @@ export function initTree(L) {
       _drop(e, root, rel);
     });
     return wrap;
+  }
+
+  // ── Projects (phase 4, the owner's T1): the top row, the timeline's projects in it ─────────────
+
+  function _projects() {
+    const wrap = el('div', 'tn');
+    const k = key('projects', '');
+    const open = unfolded.has(k);
+    const head = el('div', 'tn-row is-root');
+    head.style.paddingLeft = '4px';
+    const caret = el('button', 'tn-caret' + (L.S.projects.length ? '' : ' is-empty') + (open ? ' is-open' : ''));
+    caret.tabIndex = -1;
+    caret.innerHTML = icon('caret', 12);
+    const ic = el('span', 'tn-icon');
+    ic.innerHTML = icon('project', 16);
+    head.append(caret, ic, el('span', 'tn-name', 'Projects'));
+    head.addEventListener('click', () => _fold('projects', ''));
+    head.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      openMenu(e.clientX, e.clientY, [{ label: 'New project', act: () => newProject() }]);
+    });
+    wrap.append(head);
+    if (open) {
+      const kids = el('div', 'tn-kids');
+      for (const p of L.S.projects) {
+        const row = el('div', 'tn-row' + (p.id === L.S.project ? ' is-on' : ''));
+        row.dataset.project = p.id;
+        row.style.paddingLeft = '18px';
+        const pic = el('span', 'tn-icon');
+        pic.innerHTML = icon('project', 16);
+        row.append(pic, el('span', 'tn-name', p.name));
+        row.addEventListener('click', () => window.dispatchEvent(new CustomEvent('ms:project-open', { detail: { id: p.id } })));
+        row.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          openMenu(e.clientX, e.clientY, [
+            { label: 'Rename', act: () => _renameProject(p) },
+            { sep: true },
+            { label: 'Delete project', danger: true, really: true, act: () => _deleteProject(p) },
+          ]);
+        });
+        kids.append(row);
+      }
+      wrap.append(kids);
+    }
+    return wrap;
+  }
+
+  /** A project named "Untitled" (or "Untitled 2"…), opened on the timeline, its name typed in place. */
+  async function newProject() {
+    try {
+      const r = await post('/api/projects', { name: 'Untitled' });
+      unfolded.add(key('projects', ''));
+      keep();
+      await L.loadProjects();
+      window.dispatchEvent(new CustomEvent('ms:project-open', { detail: { id: r.project.id } }));
+      _renameProject(r.project);
+    } catch (e) {
+      showError(e.message);
+    }
+  }
+
+  function _renameProject(p) {
+    const row = host.querySelector('[data-project="' + p.id + '"]');
+    if (!row) return;
+    const name = row.querySelector('.tn-name');
+    const input = el('input', 'rename-input');
+    input.value = p.name;
+    input.spellcheck = false;
+    name.replaceWith(input);
+    input.focus();
+    input.select();
+    let done = false;
+    const finish = async (save) => {
+      if (done) return;
+      done = true;
+      const typed = input.value.trim();
+      if (save && typed && typed !== p.name) {
+        try { await post('/api/projects/' + p.id + '/rename', { name: typed }); } catch (e) { showError(e.message); }
+        window.dispatchEvent(new CustomEvent('ms:project-renamed', { detail: { id: p.id } }));
+      }
+      await L.loadProjects();
+    };
+    input.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+      if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+    });
+    input.addEventListener('blur', () => finish(true));
+    input.addEventListener('click', (e) => e.stopPropagation());
+  }
+
+  async function _deleteProject(p) {
+    try {
+      await post('/api/projects/' + p.id + '/delete');
+      window.dispatchEvent(new CustomEvent('ms:project-deleted', { detail: { id: p.id } }));
+      await L.loadProjects();
+    } catch (e) {
+      showError(e.message);
+    }
   }
 
   function _clearDrop() {
@@ -299,5 +399,5 @@ export function initTree(L) {
     input.addEventListener('dblclick', (e) => e.stopPropagation());
   }
 
-  return { paint, mark, newFolder, rename, joinRel };
+  return { paint, mark, newFolder };
 }

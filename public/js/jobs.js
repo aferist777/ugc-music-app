@@ -38,7 +38,7 @@ function _row(j) {
   const top = el('div', 'jb-top');
   const name = el('span', 'jb-name', (j.written && j.written.title) || j.label);
   name.title = j.label;
-  const kind = j.mode === 'lyrics' ? 'Lyrics' : j.mode === 'custom' ? 'Custom' : 'Simple';
+  const kind = j.kind === 'render' ? 'Render' : j.mode === 'lyrics' ? 'Lyrics' : j.mode === 'custom' ? 'Custom' : 'Simple';
   top.append(name, el('span', 'jb-meta', kind + ' · ' + _when(j.at) + (j.fake ? ' · FAKE' : '')));
   row.append(top);
   let line = '';
@@ -56,9 +56,9 @@ function _row(j) {
     b.addEventListener('click', () => _act('/api/music/jobs/' + j.id + '/stop'));
     acts.append(b);
   } else {
-    if (j.kind === 'music' && j.state === 'done' && (j.results || []).length) {
+    if ((j.kind === 'music' || j.kind === 'render') && j.state === 'done' && (j.results || []).length) {
       const b = el('button', 'link', 'show');
-      b.addEventListener('click', () => { revealFile('music', j.results[0].rel); close(); });
+      b.addEventListener('click', () => { revealFile(j.kind === 'render' ? 'video' : 'music', j.results[0].rel); close(); });
       acts.append(b);
     }
     if (j.kind === 'lyrics' && (j.lyrics || []).length) {
@@ -68,7 +68,7 @@ function _row(j) {
       acts.append(b);
     }
     if (!j.refused) {
-      const b = el('button', 'link', 'Retry · pays again');
+      const b = el('button', 'link', j.kind === 'render' ? 'Render again' : 'Retry · pays again');
       b.addEventListener('click', () => _act('/api/music/jobs/' + j.id + '/retry', (r) => JOBS.put(r.job)));
       acts.append(b);
     }

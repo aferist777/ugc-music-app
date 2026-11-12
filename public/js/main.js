@@ -1,4 +1,5 @@
-// The shell: the library column (library/main.js), the tools' tabs, the timeline's frame, the dividers, the keys.
+// The shell: the library column (library/main.js), the tools' tabs, the timeline (timeline/main.js), the dividers, the
+// keys, the theme.
 
 import { api, remembered, remember } from './api.js';
 import { initSashes } from './sash.js';
@@ -7,6 +8,7 @@ import { initLibrary } from './library/main.js';
 import { initTags } from './tags/main.js';
 import { initMusic } from './music/main.js';
 import { initJobs } from './jobs.js';
+import { initTimeline } from './timeline/main.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -33,25 +35,6 @@ function initTabs() {
   });
   const saved = remembered().tab;
   pick(tabs.some(t => t.dataset.tab === saved) ? saved : 'tags');
-}
-
-// ── Timeline (its frame only until phase 4): a ruler of seconds as wide as the lanes ──
-
-const PX_PER_SEC = 20;
-
-function paintRuler() {
-  const lanes = $('tl-lanes');
-  const ruler = $('tl-ruler');
-  ruler.style.setProperty('--tick', PX_PER_SEC + 'px');
-  ruler.textContent = '';
-  const seconds = Math.ceil(lanes.clientWidth / PX_PER_SEC);
-  for (let s = 0; s <= seconds; s += 5) {
-    const t = document.createElement('span');
-    t.className = 'tl-tick';
-    t.style.left = s * PX_PER_SEC + 'px';
-    t.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-    ruler.append(t);
-  }
 }
 
 // ── The theme (the owner, 2026-11-12: monochrome, dark or light) ─────────────
@@ -81,8 +64,7 @@ async function start() {
   initTags();
   initMusic();
   initJobs();
-  paintRuler();
-  new ResizeObserver(paintRuler).observe($('tl-lanes'));
+  initTimeline();
   try {
     const h = await api('/api/health');
     $('fake-chip').hidden = !h.fake;

@@ -425,6 +425,9 @@ function paintRecent() {
     if (j.state === 'done') {
       for (const r of j.results || []) {
         const b = el('button', 'mu-rplay', '▶' + r.n);
+        b.draggable = true;
+        b.addEventListener('dragstart', (e) => { window.msDrag = { root: 'music', rels: [r.rel] }; e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', r.name); });
+        b.addEventListener('dragend', () => { window.msDrag = null; });
         b.title = 'Play ' + r.name;
         b.addEventListener('click', () => playTrack('music', r.rel, r.name, r.dur));
         c.append(b);

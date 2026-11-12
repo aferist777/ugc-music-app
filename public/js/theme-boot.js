@@ -2,6 +2,6 @@
 // this person, dark when none. The top strip's button changes it (js/main.js).
 (function () {
   var t = 'dark';
-  try { t = localStorage.getItem('ms_theme') === 'light' ? 'light' : 'dark'; } catch (e) { /* not kept */ }
+  try { t = localStorage.getItem('ms_theme') === 'light' ? 'light' : 'dark'; } catch (_) { /* not kept */ }
   document.documentElement.setAttribute('data-theme', t);
 }());

@@ -17,6 +17,8 @@ let openTurn = 0;
 
 const S = {
   roots: [],
+  projects: [],
+  project: null, // the project open on the timeline
   root: 'music',
   rel: '',
   want: null, // the folder asked for last - what a reading of the library opens again
@@ -35,7 +37,14 @@ const L = {
   },
 
   async loadTree() {
-    S.roots = (await api('/api/library/tree')).roots || [];
+    const [t, p] = await Promise.all([api('/api/library/tree'), api('/api/projects')]);
+    S.roots = t.roots || [];
+    S.projects = p.projects || [];
+    L.tree.paint();
+  },
+
+  async loadProjects() {
+    S.projects = (await api('/api/projects')).projects || [];
     L.tree.paint();
   },
 
@@ -102,6 +111,8 @@ const L = {
     } catch (e) {
       showError(e.message);
     }
+    // The timeline reads its project again: the server may have followed a file that moved (phase 4).
+    window.dispatchEvent(new CustomEvent('ms:library-ops'));
     return r;
   },
 
@@ -178,6 +189,13 @@ export async function revealFile(root, rel) {
 }
 
 export async function initLibrary() {
+  // The project on the timeline shows as picked under Projects.
+  // Only the mark moves - the tree is not drawn again (a project's name may be being typed in it).
+  window.addEventListener('ms:project-opened', (e) => {
+    S.project = e.detail && e.detail.id;
+    for (const r of document.querySelectorAll('#lib-tree [data-project]')) r.classList.toggle('is-on', r.dataset.project === S.project);
+  });
+  window.addEventListener('ms:projects-changed', () => { L.loadProjects().catch(() => {}); });
   // A press of the Music tab landed: the library is read again (never under a name being typed).
   window.addEventListener('ms:library-changed', () => {
     if (document.querySelector('.rename-input')) return;

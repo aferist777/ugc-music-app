@@ -11,7 +11,7 @@ import { api } from '../api.js';
 import { openMenu } from '../menu.js';
 import { showError } from '../notice.js';
 import { blocked } from '../layers.js';
-import { post, q, el, icon, clock, miniWave, thumbUrl, joinRel, lastOf } from './common.js';
+import { post, q, el, icon, clock, miniWave, thumbUrl, lastOf } from './common.js';
 import { pickFolder } from './pick.js';
 
 const $ = (id) => document.getElementById(id);
@@ -106,10 +106,11 @@ export function initFiles(L) {
       row.addEventListener('dragstart', (e) => {
         if (!S.sel.has(f.rel)) _pick(f.rel, {});
         L.drag = { type: 'files', root: S.root, rels: [...S.sel] };
+        window.msDrag = { root: S.root, rels: [...S.sel] };
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('application/x-ms-files', JSON.stringify(L.drag));
       });
-      row.addEventListener('dragend', () => { L.drag = null; });
+      row.addEventListener('dragend', () => { L.drag = null; window.msDrag = null; });
     }
     return row;
   }
@@ -365,5 +366,5 @@ export function initFiles(L) {
       async () => { L.player.forget('archive', ''); await L.refresh(); });
   });
 
-  return { paint, rename, joinRel };
+  return { paint };
 }
