@@ -2,7 +2,7 @@
 // THE TREE of folders (phase 1): Music, Images, Video and - last - Archive, each with its folders. A press opens a
 // folder (its files below), the caret or a double press folds it, the right button has its menu; a folder is dragged
 // onto another of its root, picked files are dragged onto a folder of theirs, pictures from Explorer are dropped on any
-// folder (into Images, the owner's B2). Which folders are unfolded is remembered.
+// folder (a folder of Images keeps them, anywhere else Images / Uploads - phase 5). Which folders are unfolded is remembered.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { remembered, remember } from '../api.js';

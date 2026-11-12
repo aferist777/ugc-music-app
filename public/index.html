@@ -25,7 +25,7 @@
           <span>Library</span>
           <span class="pane-tools">
             <button class="btn ghost s" id="lib-new-folder" title="A new folder in the open one">+ Folder</button>
-            <button class="btn ghost s" id="lib-import" title="Bring pictures in from this computer (jpg, png, webp, gif)">Import</button>
+            <button class="btn ghost s" id="lib-import" title="Bring pictures in from this computer (jpg, png, webp, gif) - into the open folder of Images, else Images / Uploads">Import</button>
             <input type="file" id="lib-import-input" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
           </span>
         </div>
@@ -66,18 +66,8 @@
           </div>
         </section>
         <section class="panel music" role="tabpanel" data-panel="music" hidden></section>
-        <section class="panel" role="tabpanel" data-panel="images" hidden>
-          <div class="placeholder">
-            <h2>Images</h2>
-            <p>Models: in development.</p>
-          </div>
-        </section>
-        <section class="panel" role="tabpanel" data-panel="animate" hidden>
-          <div class="placeholder">
-            <h2>Animate</h2>
-            <p>A picture and a few words about the motion become a clip with Grok 1.5.</p>
-          </div>
-        </section>
+        <section class="panel vz" role="tabpanel" data-panel="images" hidden></section>
+        <section class="panel vz" role="tabpanel" data-panel="animate" hidden></section>
       </main>
     </div>
 

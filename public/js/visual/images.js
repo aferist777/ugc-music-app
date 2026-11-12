@@ -33,7 +33,7 @@ const tierOf = (m) => (m.tiers.includes(S.tiers[m.id]) ? S.tiers[m.id] : m.def);
 
 // ── The references ──────────────────────────────────────────────────────────
 
-export function addRefs(list) {
+function addRefs(list) {
   const m = modelOf();
   const max = m ? m.refs : 10;
   let added = 0;

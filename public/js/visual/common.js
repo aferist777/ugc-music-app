@@ -12,10 +12,10 @@ import { showError, showToast } from '../notice.js';
 import { el, mediaUrl, q, isPicture } from '../library/common.js';
 import * as JOBS from '../music/jobs-store.js';
 
-export { el, mediaUrl, q };
+export { el };
 
 export const thumbOf = (p) => '/api/library/thumb?' + q({ root: p.root, rel: p.rel });
-export const baseOf = (rel) => String(rel || '').split('/').pop().replace(/\.[^.]+$/, '');
+const baseOf = (rel) => String(rel || '').split('/').pop().replace(/\.[^.]+$/, '');
 export const money = (n) => '$' + (Math.round(n * 1000) / 1000);
 
 export function loadState(key, def) {
@@ -95,7 +95,9 @@ export function frame(panel, { placeholder, enhanceTitle, S, keep, onGo }) {
   input.addEventListener('input', () => { S.words = input.value; keep(); grow(); });
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); onGo(); } });
   ask.addEventListener('submit', (e) => { e.preventDefault(); onGo(); });
-  requestAnimationFrame(grow);
+  // Measured again whenever its width changes - a tab drawn while hidden measures nothing.
+  let width = 0;
+  new ResizeObserver(() => { if (input.offsetWidth !== width) { width = input.offsetWidth; grow(); } }).observe(input);
   return { side, thread, input, go };
 }
 
@@ -113,7 +115,7 @@ function _closePeek() {
   p.pop();
 }
 
-export function peek(panel, item) {
+function peek(panel, item) {
   _closePeek();
   const box = el('div', 'vz-peek');
   box.title = 'Escape or a press - back';
@@ -174,7 +176,7 @@ export function resultTile(panel, r, { video } = {}) {
 // ── The chat, following the journal ─────────────────────────────────────────
 
 const secs = (e) => Math.max(0, Math.round((Date.now() - e.at) / 1000));
-export const stateText = (e) => (e.state === 'pending' ? (e.stage || 'working') + '… ' + secs(e) + ' s' : e.state === 'failed' ? (e.refused ? 'refused: ' : 'failed: ') + (e.error || '') : e.error ? e.error : '');
+const stateText = (e) => (e.state === 'pending' ? (e.stage || 'working') + '… ' + secs(e) + ' s' : e.state === 'failed' ? (e.refused ? 'refused: ' : 'failed: ') + (e.error || '') : e.error ? e.error : '');
 
 /**
  * The chat of a kind, read again whenever a press of that kind changes in the journal. `paint(entries, grown)` - grown:

@@ -8,6 +8,8 @@ import { initLibrary } from './library/main.js';
 import { initTags } from './tags/main.js';
 import { initMusic } from './music/main.js';
 import { initJobs } from './jobs.js';
+import { initImages } from './visual/images.js';
+import { initAnimate } from './visual/animate.js';
 import { initTimeline } from './timeline/main.js';
 
 const $ = (id) => document.getElementById(id);
@@ -35,6 +37,8 @@ function initTabs() {
   });
   const saved = remembered().tab;
   pick(tabs.some(t => t.dataset.tab === saved) ? saved : 'tags');
+  // Another part of the page opens a tab (Animate under a picture, a timeline picture's right button - phase 5).
+  window.addEventListener('ms:tab', (e) => { if (e.detail && tabs.some(t => t.dataset.tab === e.detail.tab)) pick(e.detail.tab); });
 }
 
 // ── The theme (the owner, 2026-11-12: monochrome, dark or light) ─────────────
@@ -64,6 +68,8 @@ async function start() {
   initTags();
   initMusic();
   initJobs();
+  initImages();
+  initAnimate();
   initTimeline();
   try {
     const h = await api('/api/health');

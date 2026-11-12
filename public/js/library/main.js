@@ -1,8 +1,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 // THE LIBRARY COLUMN (phase 1, the owner's B1): folders on top (tree.js), the open folder's files as rows below
 // (files.js), the player under them (player.js). This module holds what is open and picked, loads the tree and the
-// list, brings pictures in (the owner's B6: pictures only; a picture dropped outside Images lands in the root of Images,
-// B2) and reads the library again whenever the window comes back - what was changed in Explorer shows then.
+// list, brings pictures in (the owner's B6: pictures only; one dropped on a folder of Images lands in it, anywhere else
+// in Images / Uploads - phase 5, i13) and reads the library again whenever the window comes back - what was changed in Explorer shows then.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { api, remembered, remember } from '../api.js';
@@ -139,7 +139,7 @@ const L = {
     const others = files.filter(f => !isPicture(f.name));
     if (others.length) showError('Only pictures can be brought in (jpg, png, webp, gif): ' + others.map(f => f.name).join(', '));
     const made = [];
-    let elsewhere = false;
+    let uploads = false;
     for (const f of pics) {
       try {
         const res = await fetch('/api/library/import?' + q({ root, rel, name: f.name }), {
@@ -148,14 +148,14 @@ const L = {
         const data = await res.json().catch(() => null);
         if (!res.ok) throw new Error((data && data.error) || 'it could not be brought in');
         made.push(data.rel);
-        if (data.elsewhere) elsewhere = true;
+        if (data.uploads) uploads = true;
       } catch (e) {
         showError(f.name + ': ' + e.message);
       }
     }
     if (!made.length) return;
     const n = made.length;
-    showToast(n + (n === 1 ? ' picture' : ' pictures') + ' brought in' + (elsewhere ? ' - pictures go into Images' : ''));
+    showToast(n + (n === 1 ? ' picture' : ' pictures') + ' brought in' + (uploads ? ' - into Images / Uploads' : ''));
     await L.loadTree();
     // Where they landed opens, with them picked.
     await L.open('images', parentRel(made[made.length - 1]), { pick: made });
@@ -211,7 +211,7 @@ export async function initLibrary() {
   input.addEventListener('change', () => {
     const files = [...input.files];
     input.value = '';
-    // Into the open folder when it is one of Images, else into the root of Images.
+    // Into the open folder when it is one of Images, else into Images / Uploads (phase 5).
     L.importFiles(files, 'images', S.root === 'images' ? S.rel : '');
   });
   document.getElementById('lib-new-folder').addEventListener('click', () => {

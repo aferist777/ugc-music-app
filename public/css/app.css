@@ -259,6 +259,63 @@ body.is-dragging-h { cursor: row-resize; }
 .mu-meta { flex: 0 0 auto; display: flex; justify-content: space-between; gap: 12px; padding: 0 12px 6px; color: var(--faint); }
 .mu-meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* ── Images and Animate (phase 5): settings on the left, one chat on the right ── */
+.panel.vz { display: flex; overflow: hidden; position: relative; }
+.panel.vz.is-drop { box-shadow: inset 0 0 0 1px var(--muted); }
+.vz-side { width: 220px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; padding: 8px; border-right: 1px solid var(--line); overflow: auto; min-height: 0; }
+.vz-side > select.field { width: 100%; }
+.vz-line { display: flex; align-items: center; gap: 6px; }
+.vz-line select.field { min-width: 0; }
+.vz-k { display: flex; align-items: center; gap: 6px; color: var(--faint); font-size: 11px; }
+.vz-line > .vz-k { width: 40px; flex: 0 0 auto; }
+.vz-price { margin-left: auto; color: var(--ink2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vz-block { display: flex; flex-direction: column; gap: 4px; }
+.vz-drop { border: 1px dashed var(--line2); border-radius: var(--r); }
+.vz-drop.is-drop { border-color: var(--muted); background: var(--sel); }
+.vz-drop-hint { color: var(--faint); font-size: 11px; padding: 6px; text-align: center; }
+.vz-refs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; min-height: 40px; }
+.vz-refs .vz-drop-hint { grid-column: 1 / -1; }
+.vz-ref { position: relative; aspect-ratio: 1; border-radius: 2px; overflow: hidden; background: var(--sel); }
+.vz-ref img, .vz-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vz-ref.is-gone, .vz-frame.is-gone { box-shadow: inset 0 0 0 1px var(--danger); }
+.vz-ref-x { position: absolute; top: 1px; right: 1px; height: 14px; min-width: 14px; padding: 0 2px; border: 0; border-radius: 2px; background: var(--bg); color: var(--muted); font-size: 9px; cursor: pointer; visibility: hidden; }
+.vz-ref:hover .vz-ref-x, .vz-frame:hover .vz-ref-x { visibility: visible; }
+.vz-ref-x:hover { color: var(--danger); }
+.vz-frame { position: relative; height: 110px; display: grid; place-items: center; overflow: hidden; background: var(--field); }
+.vz-frame img { object-fit: contain; }
+.vz-into { margin-top: auto; padding-top: 4px; color: var(--faint); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vz-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.vz-thread { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 14px; }
+.vz-empty { max-width: 420px; margin: 32px auto 0; text-align: center; color: var(--muted); }
+.vz-opts { flex: 0 0 auto; display: flex; gap: 14px; padding: 6px 12px 0; border-top: 1px solid var(--line); }
+.vz-opts + .ask { border-top: 0; padding-top: 4px; }
+.vz-msg { display: flex; flex-direction: column; gap: 4px; }
+.vz-you { align-self: flex-start; max-width: 80%; padding: 4px 9px; border-radius: var(--r); background: var(--sel); white-space: pre-wrap; word-break: break-word; }
+.vz-you.is-note { background: none; padding: 0; color: var(--muted); }
+.vz-prompt { font-size: 11px; color: var(--muted); }
+.vz-prompt summary { cursor: pointer; }
+.vz-prompt-text { margin-top: 3px; padding-left: 12px; color: var(--ink2); white-space: pre-wrap; }
+.vz-in { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.vz-in-pic { width: 24px; height: 24px; object-fit: cover; border-radius: 2px; background: var(--sel); }
+.vz-out { display: flex; flex-wrap: wrap; gap: 8px; }
+.vz-cell { display: flex; flex-direction: column; gap: 2px; }
+.vz-res { margin: 0; height: 130px; border-radius: 2px; overflow: hidden; background: var(--sel); cursor: zoom-in; }
+.vz-res img, .vz-res video { height: 100%; width: auto; display: block; }
+.vz-res.is-gone { width: 90px; display: grid; place-items: center; cursor: default; }
+.vz-gone { color: var(--danger); font-size: 11px; }
+.vz-acts { display: flex; gap: 10px; font-size: 11px; }
+.vz-wait-tile { height: 130px; aspect-ratio: 16 / 9; border: 1px dashed var(--line2); border-radius: 2px; }
+.vz-wait-tile.is-tall { aspect-ratio: 9 / 16; }
+.vz-wait-tile.is-square { aspect-ratio: 1; }
+.vz-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--faint); }
+.vz-state { color: var(--muted); }
+.vz-state.is-failed { color: var(--danger); }
+.vz-state.is-pending::before { content: ""; display: inline-block; width: 5px; height: 5px; margin-right: 5px; border-radius: 50%; background: var(--ink); vertical-align: middle; animation: pulse 1.2s ease-in-out infinite; }
+.vz-peek { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: var(--bg); cursor: zoom-out; }
+.vz-peek img, .vz-peek video { max-width: 100%; max-height: calc(100% - 24px); object-fit: contain; display: block; }
+.vz-peek video { cursor: default; }
+.vz-peek-name { color: var(--muted); font-size: 11px; }
+
 /* ── Timeline (phase 4) ────────────────────────────────── */
 .timeline { height: var(--tl-h); flex: 0 0 auto; display: flex; background: var(--bar); min-height: 110px; }
 .tl-side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 6px; border-right: 1px solid var(--line); }

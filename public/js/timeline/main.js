@@ -12,6 +12,7 @@
 import { api, remembered, remember } from '../api.js';
 import { showError, showToast } from '../notice.js';
 import { blocked } from '../layers.js';
+import { openMenu } from '../menu.js';
 import { spaceOwner, setSpaceOwner } from '../space.js';
 import { q, clock } from '../library/common.js';
 import * as JOBS from '../music/jobs-store.js';
@@ -67,7 +68,8 @@ async function load(id) {
   S.redo = [];
   S.t = Math.min(S.t, endOf());
   remember({ tlProject: S.p.id });
-  window.dispatchEvent(new CustomEvent('ms:project-opened', { detail: { id: S.p.id } }));
+  // The Images tab's frame follows the project's (phase 5, the owner's i4).
+  window.dispatchEvent(new CustomEvent('ms:project-opened', { detail: { id: S.p.id, format: S.p.format } }));
   preview.pause();
   preview.refresh();
   paintAll();
@@ -483,6 +485,7 @@ export async function initTimeline() {
     S.p.format = S.p.format === '9:16' ? '16:9' : '9:16';
     paintAll();
     saveSoon();
+    window.dispatchEvent(new CustomEvent('ms:format', { detail: { format: S.p.format } }));
   });
   $('tl-ruler').addEventListener('pointerdown', _onRulerDown);
   $('tl-lanes').addEventListener('pointerdown', (e) => {
@@ -502,7 +505,19 @@ export async function initTimeline() {
     body.scrollLeft = Math.max(0, tAt * S.pps - before + body.querySelector('.tl-names').offsetWidth);
   }, { passive: false });
 
-  // Files dragged from the library's rows or from Recent.
+  // A picture's right button: Animate - the picture becomes the Animate tab's start frame (phase 5, the owner's i8).
+  $('tl-lanes').addEventListener('contextmenu', (e) => {
+    const d = e.target.closest('.clip');
+    const c = d && clipOf(d.dataset.id);
+    if (!c || c.kind !== 'image') return;
+    e.preventDefault();
+    openMenu(e.clientX, e.clientY, [{
+      label: 'Animate', disabled: !!c.missing,
+      act: () => window.dispatchEvent(new CustomEvent('ms:animate', { detail: { root: c.root, rel: c.rel } })),
+    }]);
+  });
+
+  // Files dragged from the library's rows, from Recent, or from the Images and Animate chats.
   const lanesEl = $('tl-lanes');
   lanesEl.addEventListener('dragover', (e) => {
     const d = window.msDrag;
