@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>UGC Music Studio</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
@@ -19,9 +20,26 @@
   <div class="app" id="app">
     <div class="upper">
       <aside class="library" id="library" aria-label="Library">
-        <div class="pane-head">Library</div>
-        <ul class="roots" id="roots"></ul>
-        <p class="pane-note">Folders and files come in the next step.</p>
+        <div class="pane-head">
+          <span>Library</span>
+          <span class="pane-tools">
+            <button class="btn ghost s" id="lib-new-folder" title="A new folder in the open one">+ Folder</button>
+            <button class="btn ghost s" id="lib-import" title="Bring pictures in from this computer (jpg, png, webp, gif)">Import</button>
+            <input type="file" id="lib-import-input" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+          </span>
+        </div>
+        <div class="lib-tree" id="lib-tree" role="tree"></div>
+        <div class="sash sash-h sash-in" id="sash-tree" role="separator" aria-orientation="horizontal" title="Drag to resize"></div>
+        <div class="lib-files-head">
+          <span class="lib-crumb" id="lib-crumb"></span>
+          <button class="btn link-s" id="lib-empty-archive" hidden>Empty archive</button>
+          <span class="lib-sort">
+            <button class="sort-btn" id="lib-sort-date" title="Newest first">Date</button>
+            <button class="sort-btn" id="lib-sort-name" title="By name">Name</button>
+          </span>
+        </div>
+        <div class="lib-files" id="lib-files" tabindex="0" role="listbox" aria-multiselectable="true"></div>
+        <div class="player" id="player" hidden></div>
       </aside>
 
       <div class="sash sash-v" id="sash-lib" role="separator" aria-orientation="vertical" title="Drag to resize"></div>

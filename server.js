@@ -5,7 +5,7 @@
 
 const http = require('http');
 const express = require('express');
-const { PUBLIC_DIR, LIBRARY_DIR, FAKE, ensureLibrary } = require('./lib/config');
+const { PUBLIC_DIR, LIBRARY_DIR, ROOTS, FAKE, ensureLibrary } = require('./lib/config');
 const { guard } = require('./lib/guard');
 
 const HOST = '127.0.0.1';
@@ -14,9 +14,20 @@ function createApp() {
   const app = express();
   app.disable('x-powered-by');
   app.use(guard);
+  // The page runs only what this server gives it: no other origin's scripts, no eval.
+  app.use((req, res, next) => {
+    res.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+      + "img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'");
+    next();
+  });
   app.use(express.json({ limit: '1mb' }));
   app.use('/api', require('./routes/app'));
+  app.use('/api', require('./routes/library'));
   app.use('/api', (req, res) => res.status(404).json({ error: 'no such route' }));
+  // The library's files by their address: /media/<root>/<folders>/<name> (ranges answered - the player seeks).
+  for (const r of ROOTS) {
+    app.use('/media/' + r.id, express.static(r.dir, { dotfiles: 'deny', index: false, fallthrough: false }));
+  }
   app.use(express.static(PUBLIC_DIR, { index: 'index.html' }));
   // Errors in words, as JSON: a 400 says what was wrong; anything else is logged and said shortly.
   app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars

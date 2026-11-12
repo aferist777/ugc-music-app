@@ -2,11 +2,13 @@
 // empty field and saved, Remove takes one away. A red dot on the top strip's button while there is no kie.ai key.
 
 import { api } from './api.js';
+import { pushLayer } from './layers.js';
 
 const $ = (id) => document.getElementById(id);
 
 let keys = [];
 let opener = null;
+let pop = null;
 
 function _msg(text, error) {
   const m = $('keys-msg');
@@ -90,24 +92,21 @@ async function _save(patch, done) {
   }
 }
 
-function _onKey(e) {
-  if (e.key === 'Escape') { e.preventDefault(); close(); }
-}
-
 export async function open() {
+  if (pop) return;
   opener = document.activeElement;
   _msg('');
   try { await _load(); } catch (e) { _msg(e.message, true); }
   _paint();
   $('keys-overlay').hidden = false;
-  document.addEventListener('keydown', _onKey);
+  pop = pushLayer(close);
   const first = $('keys-form').querySelector('input');
   if (first) first.focus();
 }
 
 export function close() {
   $('keys-overlay').hidden = true;
-  document.removeEventListener('keydown', _onKey);
+  if (pop) { pop(); pop = null; }
   if (opener && opener.focus) opener.focus();
 }
 

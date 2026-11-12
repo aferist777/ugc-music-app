@@ -1,9 +1,11 @@
-// The two dividers: the library's width and the timeline's height. Dragged, kept, a double press puts one back.
+// The dividers: the library's width, the timeline's height and - inside the library - the tree's height over the files.
+// Dragged, kept, a double press puts one back.
 
 import { remembered, remember } from './api.js';
 
-const LIB = { def: 260, min: 180, max: 480, workMin: 420 };
+const LIB = { def: 320, min: 220, max: 560, workMin: 420 };
 const TL = { def: 220, min: 120, upperMin: 220 };
+const TREE = { def: 200, min: 80, filesMin: 160 };
 
 const root = document.documentElement;
 
@@ -18,9 +20,16 @@ function _tlH(h) {
   return Math.round(Math.max(TL.min, Math.min(max, h)));
 }
 
-function _set(libW, tlH) {
+function _treeH(h) {
+  const lib = document.getElementById('library');
+  const max = (lib ? lib.clientHeight : 600) - TREE.filesMin;
+  return Math.round(Math.max(TREE.min, Math.min(max, h)));
+}
+
+function _set(libW, tlH, treeH) {
   root.style.setProperty('--lib-w', libW + 'px');
   root.style.setProperty('--tl-h', tlH + 'px');
+  root.style.setProperty('--tree-h', treeH + 'px');
 }
 
 function _drag(sash, axis, onMove, onEnd) {
@@ -49,29 +58,37 @@ export function initSashes() {
   const st = remembered();
   let libW = _libW(st.libW || LIB.def);
   let tlH = _tlH(st.tlH || TL.def);
-  _set(libW, tlH);
+  _set(libW, tlH, TREE.def);
+  let treeH = _treeH(st.treeH || TREE.def);
+  _set(libW, tlH, treeH);
 
   const lib = document.getElementById('sash-lib');
   const tl = document.getElementById('sash-tl');
+  const tree = document.getElementById('sash-tree');
   const app = document.getElementById('app');
+  const treeHost = document.getElementById('lib-tree');
 
-  _drag(lib, 'v', (e) => {
-    libW = _libW(e.clientX);
-    _set(libW, tlH);
-  }, () => remember({ libW }));
+  _drag(lib, 'v', (e) => { libW = _libW(e.clientX); _set(libW, tlH, treeH); }, () => remember({ libW }));
   _drag(tl, 'h', (e) => {
     tlH = _tlH(app.getBoundingClientRect().bottom - e.clientY);
-    _set(libW, tlH);
+    _set(libW, tlH, treeH);
   }, () => remember({ tlH }));
+  _drag(tree, 'h', (e) => {
+    treeH = _treeH(e.clientY - treeHost.getBoundingClientRect().top);
+    _set(libW, tlH, treeH);
+  }, () => remember({ treeH }));
 
-  lib.addEventListener('dblclick', () => { libW = _libW(LIB.def); _set(libW, tlH); remember({ libW }); });
-  tl.addEventListener('dblclick', () => { tlH = _tlH(TL.def); _set(libW, tlH); remember({ tlH }); });
+  lib.addEventListener('dblclick', () => { libW = _libW(LIB.def); _set(libW, tlH, treeH); remember({ libW }); });
+  tl.addEventListener('dblclick', () => { tlH = _tlH(TL.def); _set(libW, tlH, treeH); remember({ tlH }); });
+  tree.addEventListener('dblclick', () => { treeH = _treeH(TREE.def); _set(libW, tlH, treeH); remember({ treeH }); });
 
-  // A smaller window keeps both within reach; what was kept comes back when there is room again.
+  // A smaller window keeps all three within reach; what was kept comes back when there is room again.
   window.addEventListener('resize', () => {
     const kept = remembered();
     libW = _libW(kept.libW || LIB.def);
     tlH = _tlH(kept.tlH || TL.def);
-    _set(libW, tlH);
+    _set(libW, tlH, treeH);
+    treeH = _treeH(kept.treeH || TREE.def);
+    _set(libW, tlH, treeH);
   });
 }
