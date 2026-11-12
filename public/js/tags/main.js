@@ -8,7 +8,7 @@
 
 import { api, remembered, remember } from '../api.js';
 import { openMenu } from '../menu.js';
-import { showError, showToast } from '../notice.js';
+import { showError } from '../notice.js';
 import { renderMarkdown } from './markdown.js';
 
 const $ = (id) => document.getElementById(id);
@@ -27,8 +27,6 @@ const S = {
   chat: null,
   pending: null,
   mix: [],
-  steps: [],
-  fake: false,
 };
 
 let pollTimer = 0;
@@ -198,7 +196,7 @@ function _answer(m) {
       if (!list.length) continue;
       const row = el('div', 'tg-group');
       row.append(el('span', 'tg-group-label', label));
-      const chips = el('span', 'tg-group-chips');
+      const chips = el('span', 'chips');
       for (const c of list) chips.append(_chip(c.tag, g, c.why));
       row.append(chips);
       tags.append(row);
@@ -211,7 +209,7 @@ function _answer(m) {
 }
 
 function _chip(tag, group, why) {
-  const b = el('button', 'tg-chip' + (S.mix.some(t => t.tag === tag) ? ' is-in' : ''), tag);
+  const b = el('button', 'chip' + (S.mix.some(t => t.tag === tag) ? ' is-on' : ''), tag);
   b.dataset.tag = tag;
   b.dataset.group = group;
   if (why) b.title = why;
@@ -329,21 +327,11 @@ function _saveMix() {
   }, 250);
 }
 
+// The picked tags show only on their chips in the answers (the owner, 2026-11-12: no Mix row); the Music tab follows
+// them as "From Tags".
 function paintMix() {
-  // The Music tab follows the Mix (phase 3, "From Tags").
   window.dispatchEvent(new CustomEvent('ms:mix', { detail: S.mix.slice() }));
-  const host = $('tg-mix-tags');
-  host.textContent = '';
-  if (!S.mix.length) host.append(el('span', 'tg-mix-empty', 'press tags in an answer to mix them'));
-  for (const t of S.mix) {
-    const b = el('button', 'tg-chip is-in is-mix is-' + t.group, t.tag);
-    b.title = 'Take it out of the Mix';
-    b.addEventListener('click', () => toggleMix(t.tag, t.group));
-    host.append(b);
-  }
-  for (const c of document.querySelectorAll('.tg-thread .tg-chip')) c.classList.toggle('is-in', S.mix.some(t => t.tag === c.dataset.tag));
-  $('tg-mix-copy').disabled = !S.mix.length;
-  $('tg-mix-clear').disabled = !S.mix.length;
+  for (const c of document.querySelectorAll('.tg-thread .chip')) c.classList.toggle('is-on', S.mix.some(t => t.tag === c.dataset.tag));
 }
 
 function toggleMix(tag, group) {
@@ -368,39 +356,10 @@ export async function initTags() {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); }
   });
-  const add = $('tg-mix-add');
-  add.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
-    e.preventDefault();
-    const tag = add.value.replace(/\s+/g, ' ').trim().toLowerCase();
-    if (!tag) return;
-    if (!S.mix.some(t => t.tag === tag)) { S.mix.push({ tag, group: 'own' }); paintMix(); _saveMix(); }
-    add.value = '';
-  });
-  $('tg-mix-copy').addEventListener('click', async () => {
-    const line = S.mix.map(t => t.tag).join(', ');
-    try { await navigator.clipboard.writeText(line); showToast('Copied: ' + line); } catch { showError('The Mix could not be copied.'); }
-  });
-  $('tg-mix-clear').addEventListener('click', () => { S.mix = []; paintMix(); _saveMix(); });
-
   try {
-    const [mix, steps, health] = await Promise.all([api('/api/tags/mix'), api('/api/tags/steps'), api('/api/health')]);
-    S.mix = mix.tags || [];
-    S.steps = steps.steps || [];
-    S.fake = !!health.fake;
+    S.mix = (await api('/api/tags/mix')).tags || [];
   } catch (e) {
     showError(e.message);
-  }
-  const foot = $('tg-foot');
-  foot.textContent = '';
-  if (S.fake) foot.append(el('span', 'tg-step is-ready', 'FAKE - free test answers'));
-  else {
-    S.steps.forEach((s, i) => {
-      if (i) foot.append(el('span', 'tg-arrow', '→'));
-      const sp = el('span', 'tg-step' + (s.ready ? ' is-ready' : ''), s.label);
-      sp.title = s.ready ? 'asked in this order until one answers' : 'no key - skipped';
-      foot.append(sp);
-    });
   }
   paintMix();
   await loadChats();

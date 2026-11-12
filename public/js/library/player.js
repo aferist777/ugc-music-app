@@ -16,10 +16,9 @@ export function initPlayer() {
   btn.title = 'Play (Space)';
   const name = el('span', 'pl-name');
   const time = el('span', 'pl-time', '0:00 / 0:00');
-  const head = el('div', 'pl-head');
-  head.append(btn, name, time);
   const canvas = el('canvas', 'pl-wave');
-  host.append(head, canvas);
+  // One line (the minimal design, 2026-11-12): play, the name, the wave, the time.
+  host.append(btn, name, canvas, time);
 
   const audio = new Audio();
   audio.preload = 'auto';
@@ -53,8 +52,8 @@ export function initPlayer() {
     const d = _dur();
     const at = d ? Math.min(1, audio.currentTime / d) : 0;
     const n = Math.max(1, Math.floor(w / 3));
-    const played = css('--gold') || '#d4b44a';
-    const rest = css('--surface-3') || '#2c2c2f';
+    const played = css('--ink') || '#eaeaea';
+    const rest = css('--line2') || '#2e2e2e';
     for (let i = 0; i < n; i++) {
       const a = Math.floor(i * peaks.length / n);
       const b = Math.max(a + 1, Math.floor((i + 1) * peaks.length / n));
@@ -65,7 +64,7 @@ export function initPlayer() {
       g.fillRect(i * 3, (h - bh) / 2, 2, bh);
     }
     if (d) {
-      g.fillStyle = css('--ink') || '#ededed';
+      g.fillStyle = css('--muted') || '#8c8c8c';
       g.fillRect(Math.round(at * w) - 1, 0, 2, h);
     }
     time.textContent = clock(audio.currentTime) + ' / ' + clock(d);
@@ -108,6 +107,8 @@ export function initPlayer() {
   });
 
   new ResizeObserver(draw).observe(canvas);
+  // A theme changed: the wave takes its colours.
+  window.addEventListener('resize', draw);
 
   document.addEventListener('keydown', (e) => {
     if (e.code !== 'Space' || blocked(e) || !cur) return;

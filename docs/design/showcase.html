@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UGC Music Studio — варианты</title>
+<style>
+  /* The showcase page itself */
+  html, body { margin: 0; background: #1b1b1d; color: #ddd; font: 14px/1.5 "Segoe UI", system-ui, sans-serif; }
+  .page { max-width: 1320px; margin: 0 auto; padding: 24px 20px 60px; }
+  .page h1 { font-size: 18px; margin: 0 0 4px; }
+  .page > p { margin: 0 0 18px; color: #999; }
+  .variant { margin: 28px 0 0; }
+  .variant h2 { font-size: 16px; margin: 0 0 2px; }
+  .variant .about { margin: 0 0 10px; color: #999; font-size: 13px; }
+  
+
+  /* ── The mock app, one markup for every variant; the variant sets the tokens ── */
+  .app {
+    --fs: 12px; --row: 24px; --pad: 8px; --gap: 6px; --r: 4px;
+    width: 1280px; height: 760px; display: flex; flex-direction: column; overflow: hidden;
+    background: var(--bg); color: var(--ink); font: var(--fs)/1.4 var(--font);
+  }
+  .app * { box-sizing: border-box; }
+  .app button, .app input, .app select, .app textarea { font: inherit; color: inherit; }
+
+  .top { height: 32px; flex: 0 0 auto; display: flex; align-items: center; gap: 14px; padding: 0 10px; border-bottom: 1px solid var(--line); background: var(--bar); }
+  .top .name { font-weight: 600; }
+  .top .sp { flex: 1; }
+  .top .lnk { color: var(--muted); cursor: pointer; }
+  .top .lnk b { color: var(--accent); font-weight: 600; }
+
+  .main { flex: 1; min-height: 0; display: flex; }
+  .lib { width: 260px; flex: 0 0 auto; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: var(--bar); }
+  .lib-h { height: var(--row); display: flex; align-items: center; justify-content: space-between; padding: 0 8px; color: var(--muted); }
+  .lib-h span:last-child { display: flex; gap: 10px; }
+  .tree { padding: 0 4px 6px; border-bottom: 1px solid var(--line); }
+  .tn { height: 22px; display: flex; align-items: center; gap: 6px; padding: 0 6px; border-radius: var(--r); white-space: nowrap; }
+  .tn.on { background: var(--sel); }
+  .tn .c { width: 10px; color: var(--faint); }
+  .tn.k2 { padding-left: 22px; }
+  .files-h { height: var(--row); display: flex; align-items: center; justify-content: space-between; padding: 0 8px; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .files { flex: 1; overflow: hidden; padding: 2px 4px; }
+  .fr { height: 24px; display: flex; align-items: center; gap: 8px; padding: 0 6px; border-radius: var(--r); }
+  .fr.on { background: var(--sel); }
+  .fr .n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fr .t { color: var(--faint); font-variant-numeric: tabular-nums; }
+  .fr .w { width: 40px; height: 10px; background: repeating-linear-gradient(90deg, var(--faint) 0 1px, transparent 1px 3px); opacity: .5; }
+  .player { border-top: 1px solid var(--line); padding: 6px 8px; display: flex; align-items: center; gap: 8px; }
+  .player .pb { width: 20px; height: 20px; border-radius: 50%; border: 0; background: var(--btn); color: var(--btn-ink); display: grid; place-items: center; font-size: 9px; }
+  .player .wv { flex: 1; height: 16px; background: linear-gradient(90deg, var(--accent) 0 30%, transparent 30%), repeating-linear-gradient(90deg, var(--faint) 0 1px, transparent 1px 3px); opacity: .7; }
+  .player .t { color: var(--faint); font-variant-numeric: tabular-nums; }
+
+  .work { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .tabs { height: 28px; flex: 0 0 auto; display: flex; align-items: flex-end; gap: 14px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+  .tab { padding: 0 0 6px; border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; }
+  .tab.on { color: var(--ink); border-bottom-color: var(--ink); }
+  .pane { flex: 1; min-height: 0; display: none; }
+  .pane.on { display: flex; }
+
+  /* chips */
+  .chip { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border: 1px solid var(--line2); border-radius: var(--chip-r); color: var(--ink2); background: var(--chip-bg); cursor: pointer; white-space: nowrap; }
+  .chip.on { background: var(--on-bg); border-color: var(--on-line); color: var(--on-ink); }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+  /* the input with its button on the right */
+  .ask { display: flex; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--line); }
+  .ask textarea { flex: 1; height: 28px; resize: none; overflow: hidden; padding: 5px 8px; border: 1px solid var(--line2); border-radius: var(--r); background: var(--field); }
+  .btn { height: 28px; padding: 0 12px; border: 1px solid var(--line2); border-radius: var(--r); background: var(--field); cursor: pointer; white-space: nowrap; }
+  .btn.pri { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); font-weight: 600; }
+  .btn.s { height: 22px; padding: 0 8px; }
+  .muted { color: var(--muted); }
+  .faint { color: var(--faint); }
+
+  /* Tags */
+  .chats { width: 170px; flex: 0 0 auto; border-right: 1px solid var(--line); padding: 6px 4px; display: flex; flex-direction: column; gap: 1px; }
+  .chats .new { margin: 0 4px 6px; }
+  .ch { padding: 4px 8px; border-radius: var(--r); }
+  .ch.on { background: var(--sel); }
+  .ch small { display: block; color: var(--faint); font-size: 11px; }
+  .thread { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .msgs { flex: 1; min-height: 0; overflow: hidden; padding: 10px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .you { align-self: flex-end; max-width: 60%; padding: 5px 9px; border-radius: var(--r); background: var(--sel); }
+  .ans p { margin: 0 0 6px; }
+  .ans .by { color: var(--faint); font-size: 11px; margin-bottom: 3px; }
+  .grp { display: flex; gap: 8px; align-items: baseline; margin-top: 4px; }
+  .grp > span:first-child { width: 42px; flex: 0 0 auto; color: var(--faint); font-size: 11px; }
+
+  /* Music */
+  .mus { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .mus-h { display: flex; align-items: center; gap: 12px; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+  .seg { display: flex; border: 1px solid var(--line2); border-radius: var(--r); overflow: hidden; }
+  .seg span { padding: 2px 10px; color: var(--muted); cursor: pointer; }
+  .seg span.on { background: var(--sel); color: var(--ink); }
+  .sel { height: 22px; padding: 0 6px; border: 1px solid var(--line2); border-radius: var(--r); background: var(--field); }
+  .num { width: 54px; height: 22px; padding: 0 6px; border: 1px solid var(--line2); border-radius: var(--r); background: var(--field); }
+  .mus-b { flex: 1; min-height: 0; overflow: hidden; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .mg { display: flex; gap: 8px; }
+  .mg > span:first-child { width: 64px; flex: 0 0 auto; color: var(--faint); padding-top: 2px; }
+  .opts { display: flex; gap: 16px; padding: 4px 0 0 72px; color: var(--muted); }
+  .opts label { display: flex; align-items: center; gap: 5px; }
+  .opts input { margin: 0; accent-color: var(--accent); }
+  .recent { display: flex; align-items: center; gap: 12px; padding: 0 12px 6px; color: var(--faint); white-space: nowrap; overflow: hidden; }
+  .recent .rc { color: var(--muted); }
+  .recent .rc b { color: var(--accent); font-weight: 600; margin-left: 4px; cursor: pointer; }
+  .meta { display: flex; justify-content: space-between; padding: 0 12px 8px; color: var(--faint); }
+
+  /* timeline */
+  .tl { height: 150px; flex: 0 0 auto; border-top: 1px solid var(--line); display: flex; flex-direction: column; background: var(--bar); }
+  .tl-h { height: 26px; display: flex; align-items: center; gap: 10px; padding: 0 10px; border-bottom: 1px solid var(--line); color: var(--muted); }
+  .tl-h .sp { flex: 1; }
+  .lanes { flex: 1; display: grid; grid-template-columns: 70px 1fr; }
+  .ln { height: 30px; display: flex; align-items: center; padding: 0 10px; color: var(--muted); border-bottom: 1px solid var(--line); }
+  .lt { border-bottom: 1px solid var(--line); background: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 100px); }
+  .ruler { height: 18px; border-bottom: 1px solid var(--line); color: var(--faint); font-size: 10px; padding-left: 4px; }
+
+  /* ── Variant A: dark, compact, the gold kept for what is chosen and the main button ── */
+  .va {
+    --font: "Segoe UI", system-ui, sans-serif;
+    --bg: #111112; --bar: #151517; --field: #1a1a1c; --sel: #242427;
+    --ink: #e6e6e6; --ink2: #cfcfcf; --muted: #9a9aa0; --faint: #6f6f75;
+    --line: #232326; --line2: #333337;
+    --accent: #d6b24e; --btn: #d6b24e; --btn-ink: #111;
+    --chip-r: 3px; --chip-bg: transparent; --on-bg: rgba(214, 178, 78, .16); --on-line: #d6b24e; --on-ink: #e8c766;
+  }
+  /* ── Variant B: dark, monochrome - no colour at all, white marks what is chosen ── */
+  .vb {
+    --font: "Segoe UI", system-ui, sans-serif;
+    --bg: #0e0e0e; --bar: #0e0e0e; --field: #161616; --sel: #222;
+    --ink: #eaeaea; --ink2: #bdbdbd; --muted: #8c8c8c; --faint: #5f5f5f;
+    --line: #1f1f1f; --line2: #2e2e2e;
+    --accent: #eaeaea; --btn: #eaeaea; --btn-ink: #0e0e0e;
+    --chip-r: 2px; --chip-bg: transparent; --on-bg: #eaeaea; --on-line: #eaeaea; --on-ink: #0e0e0e;
+  }
+  /* ── Variant C: light, monochrome - white, black text, black marks what is chosen ── */
+  .vc {
+    --font: "Segoe UI", system-ui, sans-serif;
+    --bg: #ffffff; --bar: #fafafa; --field: #ffffff; --sel: #efefef;
+    --ink: #161616; --ink2: #333; --muted: #6b6b6b; --faint: #9a9a9a;
+    --line: #e8e8e8; --line2: #d6d6d6;
+    --accent: #161616; --btn: #161616; --btn-ink: #fff;
+    --chip-r: 2px; --chip-bg: #fff; --on-bg: #161616; --on-line: #161616; --on-ink: #fff;
+  }
+  /* ── Variant D: dark grey, text-only - no frames on chips, chosen ones underlined, the densest ── */
+  .vd {
+    --fs: 12px; --row: 22px;
+    --font: "Segoe UI", system-ui, sans-serif;
+    --bg: #1c1c1e; --bar: #1c1c1e; --field: #232325; --sel: #2c2c2f;
+    --ink: #e4e4e4; --ink2: #b8b8b8; --muted: #8e8e93; --faint: #636366;
+    --line: #2a2a2d; --line2: #38383b;
+    --accent: #8ab4f8; --btn: #e4e4e4; --btn-ink: #1c1c1e;
+    --chip-r: 0; --chip-bg: transparent; --on-bg: transparent; --on-line: transparent; --on-ink: #8ab4f8;
+  }
+  .vd .chip { border-color: transparent; padding: 0 4px; height: 18px; }
+  .vd .chip.on { text-decoration: underline; text-underline-offset: 3px; }
+
+  .pair { display: flex; gap: 16px; flex-wrap: wrap; }
+  figure { margin: 0; }
+  figcaption { font-size: 12px; color: #999; margin: 0 0 4px; }
+  .frame { width: 1280px; height: 760px; zoom: .48; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 2px #333; }
+  @media (max-width: 1100px) { .frame { zoom: .6; } }
+  @media (max-width: 800px) { .frame { zoom: .4; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>UGC Music Studio — варианты минималистичного интерфейса</h1>
+  <p>Везде одно и то же: шрифт 12px, поля и кнопки 22–28px, маленькие чипы. В Tags нет строки Mix — нажатый чип просто подсвечивается на месте. В Music нет альманаха и нижней строки — Generate справа от поля ввода. Каждый вариант — два экрана: Music и Tags (показаны уменьшенными). Напиши букву варианта.</p>
+<section class="variant"><h2>A — тёмный, компактный, золото только на выбранном и главной кнопке</h2><p class="about">Ближе всего к нынешнему, но всё в 2 раза мельче и тоньше.</p><div class="pair"><figure><figcaption>Music</figcaption><div class="frame">
+  <div class="app va">
+    <div class="top"><span class="name">UGC Music Studio</span><span class="sp"></span><span class="lnk">Jobs <b>1</b></span><span class="lnk">API keys</span></div>
+    <div class="main">
+      <div class="lib">
+        <div class="lib-h"><span>Library</span><span><span>+ Folder</span><span>Import</span></span></div>
+        <div class="tree">
+          <div class="tn"><span class="c">▾</span>Music</div>
+          <div class="tn k2 on">Night drives</div>
+          <div class="tn k2">Ads</div>
+          <div class="tn"><span class="c">▸</span>Images</div>
+          <div class="tn"><span class="c"></span>Video</div>
+          <div class="tn"><span class="c"></span>Archive</div>
+        </div>
+        <div class="files-h"><span>Music / Night drives</span><span>Date · Name</span></div>
+        <div class="files">
+          <div class="fr on"><span class="n">Rainy Midnight Drive · 1</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Rainy Midnight Drive · 2</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 1</span><span class="w"></span><span class="t">3:18</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 2</span><span class="w"></span><span class="t">3:03</span></div>
+          <div class="fr"><span class="n">Neon Rain · 1</span><span class="w"></span><span class="t">1:04</span></div>
+          <div class="fr"><span class="n">Neon Rain · 2</span><span class="w"></span><span class="t">1:03</span></div>
+        </div>
+        <div class="player"><button class="pb">▶</button><span class="wv"></span><span class="t">0:27 / 1:30</span></div>
+      </div>
+      <div class="work">
+        <div class="tabs"><span class="tab" data-t="tags">Tags</span><span class="tab on" data-t="music">Music</span><span class="tab">Animate</span><span class="tab">Images</span></div>
+
+        <div class="pane" data-p="tags">
+          <div class="chats">
+            <button class="btn s new">+ New chat</button>
+            <div class="ch on">Dark Miami Synthwave<small>21:42</small></div>
+            <div class="ch">Melancholic Night Drive<small>21:10</small></div>
+            <div class="ch">Morning Disco Pop<small>вчера</small></div>
+          </div>
+          <div class="thread">
+            <div class="msgs">
+              <div class="you">хочу тёмный synthwave как в Майами 80-х, без вокала</div>
+              <div class="ans">
+                <div class="by">Claude Sonnet 5.5 · 2 searches · $0.03 · 19 s</div>
+                <p>Это <b>darksynth</b> с неоновым «майамским» налётом: аналоговые пэды, басовая арпеджиата в восьмых, гейтированные барабаны 80-х, темп 95–110 BPM, минор. Держи вокал за пределами стиля и вынеси «vocals» в Exclude.</p>
+                <div class="grp"><span>Genre</span><span class="chips"><span class="chip on">darksynth</span><span class="chip">outrun</span><span class="chip on">retrowave</span><span class="chip">synthwave</span><span class="chip">electro</span><span class="chip">cyberpunk</span></span></div>
+                <div class="grp"><span>Mood</span><span class="chips"><span class="chip">nocturnal</span><span class="chip on">menacing</span><span class="chip">neon-lit</span><span class="chip">driving</span><span class="chip">cinematic</span><span class="chip">hypnotic</span></span></div>
+                <div class="grp"><span>Sound</span><span class="chips"><span class="chip on">analog bass arpeggio</span><span class="chip">gated reverb drums</span><span class="chip">detuned pads</span><span class="chip">105 bpm</span><span class="chip">no vocals</span></span></div>
+              </div>
+            </div>
+            <div class="ask"><textarea placeholder="Describe the music you want…"></textarea><button class="btn pri">Send</button></div>
+          </div>
+        </div>
+
+        <div class="pane on" data-p="music">
+          <div class="mus">
+            <div class="mus-h">
+              <span class="seg"><span class="on">Simple</span><span>Custom</span><span>Lyrics</span></span>
+              <span class="muted">Model</span><select class="sel"><option>V6</option></select>
+              <span class="muted">Length</span><input class="num" placeholder="auto"><span class="faint">s</span>
+            </div>
+            <div class="mus-b">
+              <div class="mg"><span>Genre</span><span class="chips"><span class="chip">Lo-fi</span><span class="chip">Chillhop</span><span class="chip">Ambient</span><span class="chip">Neo-classical</span><span class="chip">Indie pop</span><span class="chip on">Synthwave</span><span class="chip">Corporate</span><span class="chip">Electronic</span><span class="chip">Deep house</span><span class="chip">Acoustic folk</span><span class="chip">Hip-hop</span><span class="chip">Trap</span><span class="chip">Phonk</span><span class="chip">Funk</span><span class="chip">Jazz</span><span class="chip">Cinematic</span><span class="chip">Future bass</span><span class="chip">Tropical house</span><span class="chip">Nu-disco</span><span class="chip">R&amp;B</span><span class="chip">Soul</span><span class="chip">Bossa nova</span><span class="chip">Reggae</span><span class="chip">Afrobeats</span><span class="chip">Amapiano</span><span class="chip">Drum &amp; bass</span><span class="chip">UK garage</span><span class="chip">Rock</span><span class="chip">Orchestral</span><span class="chip">Chiptune</span></span></div>
+              <div class="mg"><span>Mood</span><span class="chips"><span class="chip">Calm</span><span class="chip">Warm</span><span class="chip">Dreamy</span><span class="chip on">Nostalgic</span><span class="chip">Focused</span><span class="chip">Uplifting</span><span class="chip">Confident</span><span class="chip">Playful</span><span class="chip">Energetic</span><span class="chip">Emotional</span><span class="chip">Mysterious</span><span class="chip">Tense</span><span class="chip">Dark</span><span class="chip">Happy</span><span class="chip">Romantic</span><span class="chip">Inspiring</span><span class="chip">Epic</span><span class="chip">Luxurious</span><span class="chip">Melancholic</span><span class="chip">Quirky</span><span class="chip">Groovy</span><span class="chip">Adventurous</span><span class="chip">Aggressive</span></span></div>
+              <div class="mg"><span>Sound</span><span class="chips"><span class="chip">Soft piano</span><span class="chip">Rhodes</span><span class="chip on">Warm pads</span><span class="chip">Synth arp</span><span class="chip">Muted guitar</span><span class="chip">Acoustic guitar</span><span class="chip">Strings</span><span class="chip">Pizzicato</span><span class="chip">Marimba</span><span class="chip">Bells</span><span class="chip">Sub bass</span><span class="chip">808 bass</span><span class="chip">Light percussion</span><span class="chip">Brushed drums</span><span class="chip">Claps</span><span class="chip">Vinyl crackle</span><span class="chip">Saxophone</span><span class="chip">Brass</span><span class="chip">Flute</span><span class="chip">Solo violin</span><span class="chip">Cello</span><span class="chip">Choir</span><span class="chip">Ukulele</span><span class="chip">Harp</span><span class="chip">Kalimba</span><span class="chip">Hand drums</span><span class="chip">Electric guitar</span><span class="chip">Synth lead</span></span></div>
+              <div class="mg"><span>From Tags</span><span class="chips"><span class="chip on">darksynth</span><span class="chip on">retrowave</span><span class="chip on">menacing</span><span class="chip on">analog bass arpeggio</span></span></div>
+              <div class="opts"><label><input type="checkbox" checked>Instrumental</label><label><input type="checkbox" checked>Prompt enhancer</label></div>
+            </div>
+            <div class="recent"><span>Recent</span><span class="rc">Rainy Midnight Drive<b>▶1</b><b>▶2</b></span><span class="rc">Windows Down to the Sea<b>▶1</b><b>▶2</b></span><span class="rc">Neon Rain — Suno is making it… 24 s</span></div>
+            <div class="ask"><textarea placeholder="In your words - optional"></textarea><button class="btn pri">Generate</button></div>
+            <div class="meta"><span>into Music / Night drives</span><span>$0.06 · two tracks</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tl">
+      <div class="tl-h"><span>▶</span><span>0:00.0</span><span class="sp"></span><button class="btn s">Render</button></div>
+      <div class="lanes">
+        <div><div class="ruler"></div><div class="ln">Video</div><div class="ln">Audio 1</div><div class="ln">Audio 2</div></div>
+        <div><div class="ruler">0:00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0:05</div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div></div>
+      </div>
+    </div>
+  </div>
+</div></figure><figure><figcaption>Tags</figcaption><div class="frame">
+  <div class="app va">
+    <div class="top"><span class="name">UGC Music Studio</span><span class="sp"></span><span class="lnk">Jobs <b>1</b></span><span class="lnk">API keys</span></div>
+    <div class="main">
+      <div class="lib">
+        <div class="lib-h"><span>Library</span><span><span>+ Folder</span><span>Import</span></span></div>
+        <div class="tree">
+          <div class="tn"><span class="c">▾</span>Music</div>
+          <div class="tn k2 on">Night drives</div>
+          <div class="tn k2">Ads</div>
+          <div class="tn"><span class="c">▸</span>Images</div>
+          <div class="tn"><span class="c"></span>Video</div>
+          <div class="tn"><span class="c"></span>Archive</div>
+        </div>
+        <div class="files-h"><span>Music / Night drives</span><span>Date · Name</span></div>
+        <div class="files">
+          <div class="fr on"><span class="n">Rainy Midnight Drive · 1</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Rainy Midnight Drive · 2</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 1</span><span class="w"></span><span class="t">3:18</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 2</span><span class="w"></span><span class="t">3:03</span></div>
+          <div class="fr"><span class="n">Neon Rain · 1</span><span class="w"></span><span class="t">1:04</span></div>
+          <div class="fr"><span class="n">Neon Rain · 2</span><span class="w"></span><span class="t">1:03</span></div>
+        </div>
+        <div class="player"><button class="pb">▶</button><span class="wv"></span><span class="t">0:27 / 1:30</span></div>
+      </div>
+      <div class="work">
+        <div class="tabs"><span class="tab on" data-t="tags">Tags</span><span class="tab" data-t="music">Music</span><span class="tab">Animate</span><span class="tab">Images</span></div>
+
+        <div class="pane on" data-p="tags">
+          <div class="chats">
+            <button class="btn s new">+ New chat</button>
+            <div class="ch on">Dark Miami Synthwave<small>21:42</small></div>
+            <div class="ch">Melancholic Night Drive<small>21:10</small></div>
+            <div class="ch">Morning Disco Pop<small>вчера</small></div>
+          </div>
+          <div class="thread">
+            <div class="msgs">
+              <div class="you">хочу тёмный synthwave как в Майами 80-х, без вокала</div>
+              <div class="ans">
+                <div class="by">Claude Sonnet 5.5 · 2 searches · $0.03 · 19 s</div>
+                <p>Это <b>darksynth</b> с неоновым «майамским» налётом: аналоговые пэды, басовая арпеджиата в восьмых, гейтированные барабаны 80-х, темп 95–110 BPM, минор. Держи вокал за пределами стиля и вынеси «vocals» в Exclude.</p>
+                <div class="grp"><span>Genre</span><span class="chips"><span class="chip on">darksynth</span><span class="chip">outrun</span><span class="chip on">retrowave</span><span class="chip">synthwave</span><span class="chip">electro</span><span class="chip">cyberpunk</span></span></div>
+                <div class="grp"><span>Mood</span><span class="chips"><span class="chip">nocturnal</span><span class="chip on">menacing</span><span class="chip">neon-lit</span><span class="chip">driving</span><span class="chip">cinematic</span><span class="chip">hypnotic</span></span></div>
+                <div class="grp"><span>Sound</span><span class="chips"><span class="chip on">analog bass arpeggio</span><span class="chip">gated reverb drums</span><span class="chip">detuned pads</span><span class="chip">105 bpm</span><span class="chip">no vocals</span></span></div>
+              </div>
+            </div>
+            <div class="ask"><textarea placeholder="Describe the music you want…"></textarea><button class="btn pri">Send</button></div>
+          </div>
+        </div>
+
+        <div class="pane" data-p="music">
+          <div class="mus">
+            <div class="mus-h">
+              <span class="seg"><span class="on">Simple</span><span>Custom</span><span>Lyrics</span></span>
+              <span class="muted">Model</span><select class="sel"><option>V6</option></select>
+              <span class="muted">Length</span><input class="num" placeholder="auto"><span class="faint">s</span>
+            </div>
+            <div class="mus-b">
+              <div class="mg"><span>Genre</span><span class="chips"><span class="chip">Lo-fi</span><span class="chip">Chillhop</span><span class="chip">Ambient</span><span class="chip">Neo-classical</span><span class="chip">Indie pop</span><span class="chip on">Synthwave</span><span class="chip">Corporate</span><span class="chip">Electronic</span><span class="chip">Deep house</span><span class="chip">Acoustic folk</span><span class="chip">Hip-hop</span><span class="chip">Trap</span><span class="chip">Phonk</span><span class="chip">Funk</span><span class="chip">Jazz</span><span class="chip">Cinematic</span><span class="chip">Future bass</span><span class="chip">Tropical house</span><span class="chip">Nu-disco</span><span class="chip">R&amp;B</span><span class="chip">Soul</span><span class="chip">Bossa nova</span><span class="chip">Reggae</span><span class="chip">Afrobeats</span><span class="chip">Amapiano</span><span class="chip">Drum &amp; bass</span><span class="chip">UK garage</span><span class="chip">Rock</span><span class="chip">Orchestral</span><span class="chip">Chiptune</span></span></div>
+              <div class="mg"><span>Mood</span><span class="chips"><span class="chip">Calm</span><span class="chip">Warm</span><span class="chip">Dreamy</span><span class="chip on">Nostalgic</span><span class="chip">Focused</span><span class="chip">Uplifting</span><span class="chip">Confident</span><span class="chip">Playful</span><span class="chip">Energetic</span><span class="chip">Emotional</span><span class="chip">Mysterious</span><span class="chip">Tense</span><span class="chip">Dark</span><span class="chip">Happy</span><span class="chip">Romantic</span><span class="chip">Inspiring</span><span class="chip">Epic</span><span class="chip">Luxurious</span><span class="chip">Melancholic</span><span class="chip">Quirky</span><span class="chip">Groovy</span><span class="chip">Adventurous</span><span class="chip">Aggressive</span></span></div>
+              <div class="mg"><span>Sound</span><span class="chips"><span class="chip">Soft piano</span><span class="chip">Rhodes</span><span class="chip on">Warm pads</span><span class="chip">Synth arp</span><span class="chip">Muted guitar</span><span class="chip">Acoustic guitar</span><span class="chip">Strings</span><span class="chip">Pizzicato</span><span class="chip">Marimba</span><span class="chip">Bells</span><span class="chip">Sub bass</span><span class="chip">808 bass</span><span class="chip">Light percussion</span><span class="chip">Brushed drums</span><span class="chip">Claps</span><span class="chip">Vinyl crackle</span><span class="chip">Saxophone</span><span class="chip">Brass</span><span class="chip">Flute</span><span class="chip">Solo violin</span><span class="chip">Cello</span><span class="chip">Choir</span><span class="chip">Ukulele</span><span class="chip">Harp</span><span class="chip">Kalimba</span><span class="chip">Hand drums</span><span class="chip">Electric guitar</span><span class="chip">Synth lead</span></span></div>
+              <div class="mg"><span>From Tags</span><span class="chips"><span class="chip on">darksynth</span><span class="chip on">retrowave</span><span class="chip on">menacing</span><span class="chip on">analog bass arpeggio</span></span></div>
+              <div class="opts"><label><input type="checkbox" checked>Instrumental</label><label><input type="checkbox" checked>Prompt enhancer</label></div>
+            </div>
+            <div class="recent"><span>Recent</span><span class="rc">Rainy Midnight Drive<b>▶1</b><b>▶2</b></span><span class="rc">Windows Down to the Sea<b>▶1</b><b>▶2</b></span><span class="rc">Neon Rain — Suno is making it… 24 s</span></div>
+            <div class="ask"><textarea placeholder="In your words - optional"></textarea><button class="btn pri">Generate</button></div>
+            <div class="meta"><span>into Music / Night drives</span><span>$0.06 · two tracks</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tl">
+      <div class="tl-h"><span>▶</span><span>0:00.0</span><span class="sp"></span><button class="btn s">Render</button></div>
+      <div class="lanes">
+        <div><div class="ruler"></div><div class="ln">Video</div><div class="ln">Audio 1</div><div class="ln">Audio 2</div></div>
+        <div><div class="ruler">0:00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0:05</div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div></div>
+      </div>
+    </div>
+  </div>
+</div></figure></div></section>
+<section class="variant"><h2>B — тёмный монохром, без цвета</h2><p class="about">Только оттенки серого; выбранный чип — белый с чёрным текстом.</p><div class="pair"><figure><figcaption>Music</figcaption><div class="frame">
+  <div class="app vb">
+    <div class="top"><span class="name">UGC Music Studio</span><span class="sp"></span><span class="lnk">Jobs <b>1</b></span><span class="lnk">API keys</span></div>
+    <div class="main">
+      <div class="lib">
+        <div class="lib-h"><span>Library</span><span><span>+ Folder</span><span>Import</span></span></div>
+        <div class="tree">
+          <div class="tn"><span class="c">▾</span>Music</div>
+          <div class="tn k2 on">Night drives</div>
+          <div class="tn k2">Ads</div>
+          <div class="tn"><span class="c">▸</span>Images</div>
+          <div class="tn"><span class="c"></span>Video</div>
+          <div class="tn"><span class="c"></span>Archive</div>
+        </div>
+        <div class="files-h"><span>Music / Night drives</span><span>Date · Name</span></div>
+        <div class="files">
+          <div class="fr on"><span class="n">Rainy Midnight Drive · 1</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Rainy Midnight Drive · 2</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 1</span><span class="w"></span><span class="t">3:18</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 2</span><span class="w"></span><span class="t">3:03</span></div>
+          <div class="fr"><span class="n">Neon Rain · 1</span><span class="w"></span><span class="t">1:04</span></div>
+          <div class="fr"><span class="n">Neon Rain · 2</span><span class="w"></span><span class="t">1:03</span></div>
+        </div>
+        <div class="player"><button class="pb">▶</button><span class="wv"></span><span class="t">0:27 / 1:30</span></div>
+      </div>
+      <div class="work">
+        <div class="tabs"><span class="tab" data-t="tags">Tags</span><span class="tab on" data-t="music">Music</span><span class="tab">Animate</span><span class="tab">Images</span></div>
+
+        <div class="pane" data-p="tags">
+          <div class="chats">
+            <button class="btn s new">+ New chat</button>
+            <div class="ch on">Dark Miami Synthwave<small>21:42</small></div>
+            <div class="ch">Melancholic Night Drive<small>21:10</small></div>
+            <div class="ch">Morning Disco Pop<small>вчера</small></div>
+          </div>
+          <div class="thread">
+            <div class="msgs">
+              <div class="you">хочу тёмный synthwave как в Майами 80-х, без вокала</div>
+              <div class="ans">
+                <div class="by">Claude Sonnet 5.5 · 2 searches · $0.03 · 19 s</div>
+                <p>Это <b>darksynth</b> с неоновым «майамским» налётом: аналоговые пэды, басовая арпеджиата в восьмых, гейтированные барабаны 80-х, темп 95–110 BPM, минор. Держи вокал за пределами стиля и вынеси «vocals» в Exclude.</p>
+                <div class="grp"><span>Genre</span><span class="chips"><span class="chip on">darksynth</span><span class="chip">outrun</span><span class="chip on">retrowave</span><span class="chip">synthwave</span><span class="chip">electro</span><span class="chip">cyberpunk</span></span></div>
+                <div class="grp"><span>Mood</span><span class="chips"><span class="chip">nocturnal</span><span class="chip on">menacing</span><span class="chip">neon-lit</span><span class="chip">driving</span><span class="chip">cinematic</span><span class="chip">hypnotic</span></span></div>
+                <div class="grp"><span>Sound</span><span class="chips"><span class="chip on">analog bass arpeggio</span><span class="chip">gated reverb drums</span><span class="chip">detuned pads</span><span class="chip">105 bpm</span><span class="chip">no vocals</span></span></div>
+              </div>
+            </div>
+            <div class="ask"><textarea placeholder="Describe the music you want…"></textarea><button class="btn pri">Send</button></div>
+          </div>
+        </div>
+
+        <div class="pane on" data-p="music">
+          <div class="mus">
+            <div class="mus-h">
+              <span class="seg"><span class="on">Simple</span><span>Custom</span><span>Lyrics</span></span>
+              <span class="muted">Model</span><select class="sel"><option>V6</option></select>
+              <span class="muted">Length</span><input class="num" placeholder="auto"><span class="faint">s</span>
+            </div>
+            <div class="mus-b">
+              <div class="mg"><span>Genre</span><span class="chips"><span class="chip">Lo-fi</span><span class="chip">Chillhop</span><span class="chip">Ambient</span><span class="chip">Neo-classical</span><span class="chip">Indie pop</span><span class="chip on">Synthwave</span><span class="chip">Corporate</span><span class="chip">Electronic</span><span class="chip">Deep house</span><span class="chip">Acoustic folk</span><span class="chip">Hip-hop</span><span class="chip">Trap</span><span class="chip">Phonk</span><span class="chip">Funk</span><span class="chip">Jazz</span><span class="chip">Cinematic</span><span class="chip">Future bass</span><span class="chip">Tropical house</span><span class="chip">Nu-disco</span><span class="chip">R&amp;B</span><span class="chip">Soul</span><span class="chip">Bossa nova</span><span class="chip">Reggae</span><span class="chip">Afrobeats</span><span class="chip">Amapiano</span><span class="chip">Drum &amp; bass</span><span class="chip">UK garage</span><span class="chip">Rock</span><span class="chip">Orchestral</span><span class="chip">Chiptune</span></span></div>
+              <div class="mg"><span>Mood</span><span class="chips"><span class="chip">Calm</span><span class="chip">Warm</span><span class="chip">Dreamy</span><span class="chip on">Nostalgic</span><span class="chip">Focused</span><span class="chip">Uplifting</span><span class="chip">Confident</span><span class="chip">Playful</span><span class="chip">Energetic</span><span class="chip">Emotional</span><span class="chip">Mysterious</span><span class="chip">Tense</span><span class="chip">Dark</span><span class="chip">Happy</span><span class="chip">Romantic</span><span class="chip">Inspiring</span><span class="chip">Epic</span><span class="chip">Luxurious</span><span class="chip">Melancholic</span><span class="chip">Quirky</span><span class="chip">Groovy</span><span class="chip">Adventurous</span><span class="chip">Aggressive</span></span></div>
+              <div class="mg"><span>Sound</span><span class="chips"><span class="chip">Soft piano</span><span class="chip">Rhodes</span><span class="chip on">Warm pads</span><span class="chip">Synth arp</span><span class="chip">Muted guitar</span><span class="chip">Acoustic guitar</span><span class="chip">Strings</span><span class="chip">Pizzicato</span><span class="chip">Marimba</span><span class="chip">Bells</span><span class="chip">Sub bass</span><span class="chip">808 bass</span><span class="chip">Light percussion</span><span class="chip">Brushed drums</span><span class="chip">Claps</span><span class="chip">Vinyl crackle</span><span class="chip">Saxophone</span><span class="chip">Brass</span><span class="chip">Flute</span><span class="chip">Solo violin</span><span class="chip">Cello</span><span class="chip">Choir</span><span class="chip">Ukulele</span><span class="chip">Harp</span><span class="chip">Kalimba</span><span class="chip">Hand drums</span><span class="chip">Electric guitar</span><span class="chip">Synth lead</span></span></div>
+              <div class="mg"><span>From Tags</span><span class="chips"><span class="chip on">darksynth</span><span class="chip on">retrowave</span><span class="chip on">menacing</span><span class="chip on">analog bass arpeggio</span></span></div>
+              <div class="opts"><label><input type="checkbox" checked>Instrumental</label><label><input type="checkbox" checked>Prompt enhancer</label></div>
+            </div>
+            <div class="recent"><span>Recent</span><span class="rc">Rainy Midnight Drive<b>▶1</b><b>▶2</b></span><span class="rc">Windows Down to the Sea<b>▶1</b><b>▶2</b></span><span class="rc">Neon Rain — Suno is making it… 24 s</span></div>
+            <div class="ask"><textarea placeholder="In your words - optional"></textarea><button class="btn pri">Generate</button></div>
+            <div class="meta"><span>into Music / Night drives</span><span>$0.06 · two tracks</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tl">
+      <div class="tl-h"><span>▶</span><span>0:00.0</span><span class="sp"></span><button class="btn s">Render</button></div>
+      <div class="lanes">
+        <div><div class="ruler"></div><div class="ln">Video</div><div class="ln">Audio 1</div><div class="ln">Audio 2</div></div>
+        <div><div class="ruler">0:00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0:05</div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div></div>
+      </div>
+    </div>
+  </div>
+</div></figure><figure><figcaption>Tags</figcaption><div class="frame">
+  <div class="app vb">
+    <div class="top"><span class="name">UGC Music Studio</span><span class="sp"></span><span class="lnk">Jobs <b>1</b></span><span class="lnk">API keys</span></div>
+    <div class="main">
+      <div class="lib">
+        <div class="lib-h"><span>Library</span><span><span>+ Folder</span><span>Import</span></span></div>
+        <div class="tree">
+          <div class="tn"><span class="c">▾</span>Music</div>
+          <div class="tn k2 on">Night drives</div>
+          <div class="tn k2">Ads</div>
+          <div class="tn"><span class="c">▸</span>Images</div>
+          <div class="tn"><span class="c"></span>Video</div>
+          <div class="tn"><span class="c"></span>Archive</div>
+        </div>
+        <div class="files-h"><span>Music / Night drives</span><span>Date · Name</span></div>
+        <div class="files">
+          <div class="fr on"><span class="n">Rainy Midnight Drive · 1</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Rainy Midnight Drive · 2</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 1</span><span class="w"></span><span class="t">3:18</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 2</span><span class="w"></span><span class="t">3:03</span></div>
+          <div class="fr"><span class="n">Neon Rain · 1</span><span class="w"></span><span class="t">1:04</span></div>
+          <div class="fr"><span class="n">Neon Rain · 2</span><span class="w"></span><span class="t">1:03</span></div>
+        </div>
+        <div class="player"><button class="pb">▶</button><span class="wv"></span><span class="t">0:27 / 1:30</span></div>
+      </div>
+      <div class="work">
+        <div class="tabs"><span class="tab on" data-t="tags">Tags</span><span class="tab" data-t="music">Music</span><span class="tab">Animate</span><span class="tab">Images</span></div>
+
+        <div class="pane on" data-p="tags">
+          <div class="chats">
+            <button class="btn s new">+ New chat</button>
+            <div class="ch on">Dark Miami Synthwave<small>21:42</small></div>
+            <div class="ch">Melancholic Night Drive<small>21:10</small></div>
+            <div class="ch">Morning Disco Pop<small>вчера</small></div>
+          </div>
+          <div class="thread">
+            <div class="msgs">
+              <div class="you">хочу тёмный synthwave как в Майами 80-х, без вокала</div>
+              <div class="ans">
+                <div class="by">Claude Sonnet 5.5 · 2 searches · $0.03 · 19 s</div>
+                <p>Это <b>darksynth</b> с неоновым «майамским» налётом: аналоговые пэды, басовая арпеджиата в восьмых, гейтированные барабаны 80-х, темп 95–110 BPM, минор. Держи вокал за пределами стиля и вынеси «vocals» в Exclude.</p>
+                <div class="grp"><span>Genre</span><span class="chips"><span class="chip on">darksynth</span><span class="chip">outrun</span><span class="chip on">retrowave</span><span class="chip">synthwave</span><span class="chip">electro</span><span class="chip">cyberpunk</span></span></div>
+                <div class="grp"><span>Mood</span><span class="chips"><span class="chip">nocturnal</span><span class="chip on">menacing</span><span class="chip">neon-lit</span><span class="chip">driving</span><span class="chip">cinematic</span><span class="chip">hypnotic</span></span></div>
+                <div class="grp"><span>Sound</span><span class="chips"><span class="chip on">analog bass arpeggio</span><span class="chip">gated reverb drums</span><span class="chip">detuned pads</span><span class="chip">105 bpm</span><span class="chip">no vocals</span></span></div>
+              </div>
+            </div>
+            <div class="ask"><textarea placeholder="Describe the music you want…"></textarea><button class="btn pri">Send</button></div>
+          </div>
+        </div>
+
+        <div class="pane" data-p="music">
+          <div class="mus">
+            <div class="mus-h">
+              <span class="seg"><span class="on">Simple</span><span>Custom</span><span>Lyrics</span></span>
+              <span class="muted">Model</span><select class="sel"><option>V6</option></select>
+              <span class="muted">Length</span><input class="num" placeholder="auto"><span class="faint">s</span>
+            </div>
+            <div class="mus-b">
+              <div class="mg"><span>Genre</span><span class="chips"><span class="chip">Lo-fi</span><span class="chip">Chillhop</span><span class="chip">Ambient</span><span class="chip">Neo-classical</span><span class="chip">Indie pop</span><span class="chip on">Synthwave</span><span class="chip">Corporate</span><span class="chip">Electronic</span><span class="chip">Deep house</span><span class="chip">Acoustic folk</span><span class="chip">Hip-hop</span><span class="chip">Trap</span><span class="chip">Phonk</span><span class="chip">Funk</span><span class="chip">Jazz</span><span class="chip">Cinematic</span><span class="chip">Future bass</span><span class="chip">Tropical house</span><span class="chip">Nu-disco</span><span class="chip">R&amp;B</span><span class="chip">Soul</span><span class="chip">Bossa nova</span><span class="chip">Reggae</span><span class="chip">Afrobeats</span><span class="chip">Amapiano</span><span class="chip">Drum &amp; bass</span><span class="chip">UK garage</span><span class="chip">Rock</span><span class="chip">Orchestral</span><span class="chip">Chiptune</span></span></div>
+              <div class="mg"><span>Mood</span><span class="chips"><span class="chip">Calm</span><span class="chip">Warm</span><span class="chip">Dreamy</span><span class="chip on">Nostalgic</span><span class="chip">Focused</span><span class="chip">Uplifting</span><span class="chip">Confident</span><span class="chip">Playful</span><span class="chip">Energetic</span><span class="chip">Emotional</span><span class="chip">Mysterious</span><span class="chip">Tense</span><span class="chip">Dark</span><span class="chip">Happy</span><span class="chip">Romantic</span><span class="chip">Inspiring</span><span class="chip">Epic</span><span class="chip">Luxurious</span><span class="chip">Melancholic</span><span class="chip">Quirky</span><span class="chip">Groovy</span><span class="chip">Adventurous</span><span class="chip">Aggressive</span></span></div>
+              <div class="mg"><span>Sound</span><span class="chips"><span class="chip">Soft piano</span><span class="chip">Rhodes</span><span class="chip on">Warm pads</span><span class="chip">Synth arp</span><span class="chip">Muted guitar</span><span class="chip">Acoustic guitar</span><span class="chip">Strings</span><span class="chip">Pizzicato</span><span class="chip">Marimba</span><span class="chip">Bells</span><span class="chip">Sub bass</span><span class="chip">808 bass</span><span class="chip">Light percussion</span><span class="chip">Brushed drums</span><span class="chip">Claps</span><span class="chip">Vinyl crackle</span><span class="chip">Saxophone</span><span class="chip">Brass</span><span class="chip">Flute</span><span class="chip">Solo violin</span><span class="chip">Cello</span><span class="chip">Choir</span><span class="chip">Ukulele</span><span class="chip">Harp</span><span class="chip">Kalimba</span><span class="chip">Hand drums</span><span class="chip">Electric guitar</span><span class="chip">Synth lead</span></span></div>
+              <div class="mg"><span>From Tags</span><span class="chips"><span class="chip on">darksynth</span><span class="chip on">retrowave</span><span class="chip on">menacing</span><span class="chip on">analog bass arpeggio</span></span></div>
+              <div class="opts"><label><input type="checkbox" checked>Instrumental</label><label><input type="checkbox" checked>Prompt enhancer</label></div>
+            </div>
+            <div class="recent"><span>Recent</span><span class="rc">Rainy Midnight Drive<b>▶1</b><b>▶2</b></span><span class="rc">Windows Down to the Sea<b>▶1</b><b>▶2</b></span><span class="rc">Neon Rain — Suno is making it… 24 s</span></div>
+            <div class="ask"><textarea placeholder="In your words - optional"></textarea><button class="btn pri">Generate</button></div>
+            <div class="meta"><span>into Music / Night drives</span><span>$0.06 · two tracks</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tl">
+      <div class="tl-h"><span>▶</span><span>0:00.0</span><span class="sp"></span><button class="btn s">Render</button></div>
+      <div class="lanes">
+        <div><div class="ruler"></div><div class="ln">Video</div><div class="ln">Audio 1</div><div class="ln">Audio 2</div></div>
+        <div><div class="ruler">0:00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0:05</div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div></div>
+      </div>
+    </div>
+  </div>
+</div></figure></div></section>
+<section class="variant"><h2>C — светлый монохром</h2><p class="about">Белый фон, чёрный текст; выбранный чип — чёрный с белым текстом.</p><div class="pair"><figure><figcaption>Music</figcaption><div class="frame">
+  <div class="app vc">
+    <div class="top"><span class="name">UGC Music Studio</span><span class="sp"></span><span class="lnk">Jobs <b>1</b></span><span class="lnk">API keys</span></div>
+    <div class="main">
+      <div class="lib">
+        <div class="lib-h"><span>Library</span><span><span>+ Folder</span><span>Import</span></span></div>
+        <div class="tree">
+          <div class="tn"><span class="c">▾</span>Music</div>
+          <div class="tn k2 on">Night drives</div>
+          <div class="tn k2">Ads</div>
+          <div class="tn"><span class="c">▸</span>Images</div>
+          <div class="tn"><span class="c"></span>Video</div>
+          <div class="tn"><span class="c"></span>Archive</div>
+        </div>
+        <div class="files-h"><span>Music / Night drives</span><span>Date · Name</span></div>
+        <div class="files">
+          <div class="fr on"><span class="n">Rainy Midnight Drive · 1</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Rainy Midnight Drive · 2</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 1</span><span class="w"></span><span class="t">3:18</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 2</span><span class="w"></span><span class="t">3:03</span></div>
+          <div class="fr"><span class="n">Neon Rain · 1</span><span class="w"></span><span class="t">1:04</span></div>
+          <div class="fr"><span class="n">Neon Rain · 2</span><span class="w"></span><span class="t">1:03</span></div>
+        </div>
+        <div class="player"><button class="pb">▶</button><span class="wv"></span><span class="t">0:27 / 1:30</span></div>
+      </div>
+      <div class="work">
+        <div class="tabs"><span class="tab" data-t="tags">Tags</span><span class="tab on" data-t="music">Music</span><span class="tab">Animate</span><span class="tab">Images</span></div>
+
+        <div class="pane" data-p="tags">
+          <div class="chats">
+            <button class="btn s new">+ New chat</button>
+            <div class="ch on">Dark Miami Synthwave<small>21:42</small></div>
+            <div class="ch">Melancholic Night Drive<small>21:10</small></div>
+            <div class="ch">Morning Disco Pop<small>вчера</small></div>
+          </div>
+          <div class="thread">
+            <div class="msgs">
+              <div class="you">хочу тёмный synthwave как в Майами 80-х, без вокала</div>
+              <div class="ans">
+                <div class="by">Claude Sonnet 5.5 · 2 searches · $0.03 · 19 s</div>
+                <p>Это <b>darksynth</b> с неоновым «майамским» налётом: аналоговые пэды, басовая арпеджиата в восьмых, гейтированные барабаны 80-х, темп 95–110 BPM, минор. Держи вокал за пределами стиля и вынеси «vocals» в Exclude.</p>
+                <div class="grp"><span>Genre</span><span class="chips"><span class="chip on">darksynth</span><span class="chip">outrun</span><span class="chip on">retrowave</span><span class="chip">synthwave</span><span class="chip">electro</span><span class="chip">cyberpunk</span></span></div>
+                <div class="grp"><span>Mood</span><span class="chips"><span class="chip">nocturnal</span><span class="chip on">menacing</span><span class="chip">neon-lit</span><span class="chip">driving</span><span class="chip">cinematic</span><span class="chip">hypnotic</span></span></div>
+                <div class="grp"><span>Sound</span><span class="chips"><span class="chip on">analog bass arpeggio</span><span class="chip">gated reverb drums</span><span class="chip">detuned pads</span><span class="chip">105 bpm</span><span class="chip">no vocals</span></span></div>
+              </div>
+            </div>
+            <div class="ask"><textarea placeholder="Describe the music you want…"></textarea><button class="btn pri">Send</button></div>
+          </div>
+        </div>
+
+        <div class="pane on" data-p="music">
+          <div class="mus">
+            <div class="mus-h">
+              <span class="seg"><span class="on">Simple</span><span>Custom</span><span>Lyrics</span></span>
+              <span class="muted">Model</span><select class="sel"><option>V6</option></select>
+              <span class="muted">Length</span><input class="num" placeholder="auto"><span class="faint">s</span>
+            </div>
+            <div class="mus-b">
+              <div class="mg"><span>Genre</span><span class="chips"><span class="chip">Lo-fi</span><span class="chip">Chillhop</span><span class="chip">Ambient</span><span class="chip">Neo-classical</span><span class="chip">Indie pop</span><span class="chip on">Synthwave</span><span class="chip">Corporate</span><span class="chip">Electronic</span><span class="chip">Deep house</span><span class="chip">Acoustic folk</span><span class="chip">Hip-hop</span><span class="chip">Trap</span><span class="chip">Phonk</span><span class="chip">Funk</span><span class="chip">Jazz</span><span class="chip">Cinematic</span><span class="chip">Future bass</span><span class="chip">Tropical house</span><span class="chip">Nu-disco</span><span class="chip">R&amp;B</span><span class="chip">Soul</span><span class="chip">Bossa nova</span><span class="chip">Reggae</span><span class="chip">Afrobeats</span><span class="chip">Amapiano</span><span class="chip">Drum &amp; bass</span><span class="chip">UK garage</span><span class="chip">Rock</span><span class="chip">Orchestral</span><span class="chip">Chiptune</span></span></div>
+              <div class="mg"><span>Mood</span><span class="chips"><span class="chip">Calm</span><span class="chip">Warm</span><span class="chip">Dreamy</span><span class="chip on">Nostalgic</span><span class="chip">Focused</span><span class="chip">Uplifting</span><span class="chip">Confident</span><span class="chip">Playful</span><span class="chip">Energetic</span><span class="chip">Emotional</span><span class="chip">Mysterious</span><span class="chip">Tense</span><span class="chip">Dark</span><span class="chip">Happy</span><span class="chip">Romantic</span><span class="chip">Inspiring</span><span class="chip">Epic</span><span class="chip">Luxurious</span><span class="chip">Melancholic</span><span class="chip">Quirky</span><span class="chip">Groovy</span><span class="chip">Adventurous</span><span class="chip">Aggressive</span></span></div>
+              <div class="mg"><span>Sound</span><span class="chips"><span class="chip">Soft piano</span><span class="chip">Rhodes</span><span class="chip on">Warm pads</span><span class="chip">Synth arp</span><span class="chip">Muted guitar</span><span class="chip">Acoustic guitar</span><span class="chip">Strings</span><span class="chip">Pizzicato</span><span class="chip">Marimba</span><span class="chip">Bells</span><span class="chip">Sub bass</span><span class="chip">808 bass</span><span class="chip">Light percussion</span><span class="chip">Brushed drums</span><span class="chip">Claps</span><span class="chip">Vinyl crackle</span><span class="chip">Saxophone</span><span class="chip">Brass</span><span class="chip">Flute</span><span class="chip">Solo violin</span><span class="chip">Cello</span><span class="chip">Choir</span><span class="chip">Ukulele</span><span class="chip">Harp</span><span class="chip">Kalimba</span><span class="chip">Hand drums</span><span class="chip">Electric guitar</span><span class="chip">Synth lead</span></span></div>
+              <div class="mg"><span>From Tags</span><span class="chips"><span class="chip on">darksynth</span><span class="chip on">retrowave</span><span class="chip on">menacing</span><span class="chip on">analog bass arpeggio</span></span></div>
+              <div class="opts"><label><input type="checkbox" checked>Instrumental</label><label><input type="checkbox" checked>Prompt enhancer</label></div>
+            </div>
+            <div class="recent"><span>Recent</span><span class="rc">Rainy Midnight Drive<b>▶1</b><b>▶2</b></span><span class="rc">Windows Down to the Sea<b>▶1</b><b>▶2</b></span><span class="rc">Neon Rain — Suno is making it… 24 s</span></div>
+            <div class="ask"><textarea placeholder="In your words - optional"></textarea><button class="btn pri">Generate</button></div>
+            <div class="meta"><span>into Music / Night drives</span><span>$0.06 · two tracks</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tl">
+      <div class="tl-h"><span>▶</span><span>0:00.0</span><span class="sp"></span><button class="btn s">Render</button></div>
+      <div class="lanes">
+        <div><div class="ruler"></div><div class="ln">Video</div><div class="ln">Audio 1</div><div class="ln">Audio 2</div></div>
+        <div><div class="ruler">0:00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0:05</div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div></div>
+      </div>
+    </div>
+  </div>
+</div></figure><figure><figcaption>Tags</figcaption><div class="frame">
+  <div class="app vc">
+    <div class="top"><span class="name">UGC Music Studio</span><span class="sp"></span><span class="lnk">Jobs <b>1</b></span><span class="lnk">API keys</span></div>
+    <div class="main">
+      <div class="lib">
+        <div class="lib-h"><span>Library</span><span><span>+ Folder</span><span>Import</span></span></div>
+        <div class="tree">
+          <div class="tn"><span class="c">▾</span>Music</div>
+          <div class="tn k2 on">Night drives</div>
+          <div class="tn k2">Ads</div>
+          <div class="tn"><span class="c">▸</span>Images</div>
+          <div class="tn"><span class="c"></span>Video</div>
+          <div class="tn"><span class="c"></span>Archive</div>
+        </div>
+        <div class="files-h"><span>Music / Night drives</span><span>Date · Name</span></div>
+        <div class="files">
+          <div class="fr on"><span class="n">Rainy Midnight Drive · 1</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Rainy Midnight Drive · 2</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 1</span><span class="w"></span><span class="t">3:18</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 2</span><span class="w"></span><span class="t">3:03</span></div>
+          <div class="fr"><span class="n">Neon Rain · 1</span><span class="w"></span><span class="t">1:04</span></div>
+          <div class="fr"><span class="n">Neon Rain · 2</span><span class="w"></span><span class="t">1:03</span></div>
+        </div>
+        <div class="player"><button class="pb">▶</button><span class="wv"></span><span class="t">0:27 / 1:30</span></div>
+      </div>
+      <div class="work">
+        <div class="tabs"><span class="tab on" data-t="tags">Tags</span><span class="tab" data-t="music">Music</span><span class="tab">Animate</span><span class="tab">Images</span></div>
+
+        <div class="pane on" data-p="tags">
+          <div class="chats">
+            <button class="btn s new">+ New chat</button>
+            <div class="ch on">Dark Miami Synthwave<small>21:42</small></div>
+            <div class="ch">Melancholic Night Drive<small>21:10</small></div>
+            <div class="ch">Morning Disco Pop<small>вчера</small></div>
+          </div>
+          <div class="thread">
+            <div class="msgs">
+              <div class="you">хочу тёмный synthwave как в Майами 80-х, без вокала</div>
+              <div class="ans">
+                <div class="by">Claude Sonnet 5.5 · 2 searches · $0.03 · 19 s</div>
+                <p>Это <b>darksynth</b> с неоновым «майамским» налётом: аналоговые пэды, басовая арпеджиата в восьмых, гейтированные барабаны 80-х, темп 95–110 BPM, минор. Держи вокал за пределами стиля и вынеси «vocals» в Exclude.</p>
+                <div class="grp"><span>Genre</span><span class="chips"><span class="chip on">darksynth</span><span class="chip">outrun</span><span class="chip on">retrowave</span><span class="chip">synthwave</span><span class="chip">electro</span><span class="chip">cyberpunk</span></span></div>
+                <div class="grp"><span>Mood</span><span class="chips"><span class="chip">nocturnal</span><span class="chip on">menacing</span><span class="chip">neon-lit</span><span class="chip">driving</span><span class="chip">cinematic</span><span class="chip">hypnotic</span></span></div>
+                <div class="grp"><span>Sound</span><span class="chips"><span class="chip on">analog bass arpeggio</span><span class="chip">gated reverb drums</span><span class="chip">detuned pads</span><span class="chip">105 bpm</span><span class="chip">no vocals</span></span></div>
+              </div>
+            </div>
+            <div class="ask"><textarea placeholder="Describe the music you want…"></textarea><button class="btn pri">Send</button></div>
+          </div>
+        </div>
+
+        <div class="pane" data-p="music">
+          <div class="mus">
+            <div class="mus-h">
+              <span class="seg"><span class="on">Simple</span><span>Custom</span><span>Lyrics</span></span>
+              <span class="muted">Model</span><select class="sel"><option>V6</option></select>
+              <span class="muted">Length</span><input class="num" placeholder="auto"><span class="faint">s</span>
+            </div>
+            <div class="mus-b">
+              <div class="mg"><span>Genre</span><span class="chips"><span class="chip">Lo-fi</span><span class="chip">Chillhop</span><span class="chip">Ambient</span><span class="chip">Neo-classical</span><span class="chip">Indie pop</span><span class="chip on">Synthwave</span><span class="chip">Corporate</span><span class="chip">Electronic</span><span class="chip">Deep house</span><span class="chip">Acoustic folk</span><span class="chip">Hip-hop</span><span class="chip">Trap</span><span class="chip">Phonk</span><span class="chip">Funk</span><span class="chip">Jazz</span><span class="chip">Cinematic</span><span class="chip">Future bass</span><span class="chip">Tropical house</span><span class="chip">Nu-disco</span><span class="chip">R&amp;B</span><span class="chip">Soul</span><span class="chip">Bossa nova</span><span class="chip">Reggae</span><span class="chip">Afrobeats</span><span class="chip">Amapiano</span><span class="chip">Drum &amp; bass</span><span class="chip">UK garage</span><span class="chip">Rock</span><span class="chip">Orchestral</span><span class="chip">Chiptune</span></span></div>
+              <div class="mg"><span>Mood</span><span class="chips"><span class="chip">Calm</span><span class="chip">Warm</span><span class="chip">Dreamy</span><span class="chip on">Nostalgic</span><span class="chip">Focused</span><span class="chip">Uplifting</span><span class="chip">Confident</span><span class="chip">Playful</span><span class="chip">Energetic</span><span class="chip">Emotional</span><span class="chip">Mysterious</span><span class="chip">Tense</span><span class="chip">Dark</span><span class="chip">Happy</span><span class="chip">Romantic</span><span class="chip">Inspiring</span><span class="chip">Epic</span><span class="chip">Luxurious</span><span class="chip">Melancholic</span><span class="chip">Quirky</span><span class="chip">Groovy</span><span class="chip">Adventurous</span><span class="chip">Aggressive</span></span></div>
+              <div class="mg"><span>Sound</span><span class="chips"><span class="chip">Soft piano</span><span class="chip">Rhodes</span><span class="chip on">Warm pads</span><span class="chip">Synth arp</span><span class="chip">Muted guitar</span><span class="chip">Acoustic guitar</span><span class="chip">Strings</span><span class="chip">Pizzicato</span><span class="chip">Marimba</span><span class="chip">Bells</span><span class="chip">Sub bass</span><span class="chip">808 bass</span><span class="chip">Light percussion</span><span class="chip">Brushed drums</span><span class="chip">Claps</span><span class="chip">Vinyl crackle</span><span class="chip">Saxophone</span><span class="chip">Brass</span><span class="chip">Flute</span><span class="chip">Solo violin</span><span class="chip">Cello</span><span class="chip">Choir</span><span class="chip">Ukulele</span><span class="chip">Harp</span><span class="chip">Kalimba</span><span class="chip">Hand drums</span><span class="chip">Electric guitar</span><span class="chip">Synth lead</span></span></div>
+              <div class="mg"><span>From Tags</span><span class="chips"><span class="chip on">darksynth</span><span class="chip on">retrowave</span><span class="chip on">menacing</span><span class="chip on">analog bass arpeggio</span></span></div>
+              <div class="opts"><label><input type="checkbox" checked>Instrumental</label><label><input type="checkbox" checked>Prompt enhancer</label></div>
+            </div>
+            <div class="recent"><span>Recent</span><span class="rc">Rainy Midnight Drive<b>▶1</b><b>▶2</b></span><span class="rc">Windows Down to the Sea<b>▶1</b><b>▶2</b></span><span class="rc">Neon Rain — Suno is making it… 24 s</span></div>
+            <div class="ask"><textarea placeholder="In your words - optional"></textarea><button class="btn pri">Generate</button></div>
+            <div class="meta"><span>into Music / Night drives</span><span>$0.06 · two tracks</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tl">
+      <div class="tl-h"><span>▶</span><span>0:00.0</span><span class="sp"></span><button class="btn s">Render</button></div>
+      <div class="lanes">
+        <div><div class="ruler"></div><div class="ln">Video</div><div class="ln">Audio 1</div><div class="ln">Audio 2</div></div>
+        <div><div class="ruler">0:00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0:05</div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div></div>
+      </div>
+    </div>
+  </div>
+</div></figure></div></section>
+<section class="variant"><h2>D — тёмно-серый, только текст</h2><p class="about">Чипы без рамок, выбранный — подчёркнут цветом; самый плотный.</p><div class="pair"><figure><figcaption>Music</figcaption><div class="frame">
+  <div class="app vd">
+    <div class="top"><span class="name">UGC Music Studio</span><span class="sp"></span><span class="lnk">Jobs <b>1</b></span><span class="lnk">API keys</span></div>
+    <div class="main">
+      <div class="lib">
+        <div class="lib-h"><span>Library</span><span><span>+ Folder</span><span>Import</span></span></div>
+        <div class="tree">
+          <div class="tn"><span class="c">▾</span>Music</div>
+          <div class="tn k2 on">Night drives</div>
+          <div class="tn k2">Ads</div>
+          <div class="tn"><span class="c">▸</span>Images</div>
+          <div class="tn"><span class="c"></span>Video</div>
+          <div class="tn"><span class="c"></span>Archive</div>
+        </div>
+        <div class="files-h"><span>Music / Night drives</span><span>Date · Name</span></div>
+        <div class="files">
+          <div class="fr on"><span class="n">Rainy Midnight Drive · 1</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Rainy Midnight Drive · 2</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 1</span><span class="w"></span><span class="t">3:18</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 2</span><span class="w"></span><span class="t">3:03</span></div>
+          <div class="fr"><span class="n">Neon Rain · 1</span><span class="w"></span><span class="t">1:04</span></div>
+          <div class="fr"><span class="n">Neon Rain · 2</span><span class="w"></span><span class="t">1:03</span></div>
+        </div>
+        <div class="player"><button class="pb">▶</button><span class="wv"></span><span class="t">0:27 / 1:30</span></div>
+      </div>
+      <div class="work">
+        <div class="tabs"><span class="tab" data-t="tags">Tags</span><span class="tab on" data-t="music">Music</span><span class="tab">Animate</span><span class="tab">Images</span></div>
+
+        <div class="pane" data-p="tags">
+          <div class="chats">
+            <button class="btn s new">+ New chat</button>
+            <div class="ch on">Dark Miami Synthwave<small>21:42</small></div>
+            <div class="ch">Melancholic Night Drive<small>21:10</small></div>
+            <div class="ch">Morning Disco Pop<small>вчера</small></div>
+          </div>
+          <div class="thread">
+            <div class="msgs">
+              <div class="you">хочу тёмный synthwave как в Майами 80-х, без вокала</div>
+              <div class="ans">
+                <div class="by">Claude Sonnet 5.5 · 2 searches · $0.03 · 19 s</div>
+                <p>Это <b>darksynth</b> с неоновым «майамским» налётом: аналоговые пэды, басовая арпеджиата в восьмых, гейтированные барабаны 80-х, темп 95–110 BPM, минор. Держи вокал за пределами стиля и вынеси «vocals» в Exclude.</p>
+                <div class="grp"><span>Genre</span><span class="chips"><span class="chip on">darksynth</span><span class="chip">outrun</span><span class="chip on">retrowave</span><span class="chip">synthwave</span><span class="chip">electro</span><span class="chip">cyberpunk</span></span></div>
+                <div class="grp"><span>Mood</span><span class="chips"><span class="chip">nocturnal</span><span class="chip on">menacing</span><span class="chip">neon-lit</span><span class="chip">driving</span><span class="chip">cinematic</span><span class="chip">hypnotic</span></span></div>
+                <div class="grp"><span>Sound</span><span class="chips"><span class="chip on">analog bass arpeggio</span><span class="chip">gated reverb drums</span><span class="chip">detuned pads</span><span class="chip">105 bpm</span><span class="chip">no vocals</span></span></div>
+              </div>
+            </div>
+            <div class="ask"><textarea placeholder="Describe the music you want…"></textarea><button class="btn pri">Send</button></div>
+          </div>
+        </div>
+
+        <div class="pane on" data-p="music">
+          <div class="mus">
+            <div class="mus-h">
+              <span class="seg"><span class="on">Simple</span><span>Custom</span><span>Lyrics</span></span>
+              <span class="muted">Model</span><select class="sel"><option>V6</option></select>
+              <span class="muted">Length</span><input class="num" placeholder="auto"><span class="faint">s</span>
+            </div>
+            <div class="mus-b">
+              <div class="mg"><span>Genre</span><span class="chips"><span class="chip">Lo-fi</span><span class="chip">Chillhop</span><span class="chip">Ambient</span><span class="chip">Neo-classical</span><span class="chip">Indie pop</span><span class="chip on">Synthwave</span><span class="chip">Corporate</span><span class="chip">Electronic</span><span class="chip">Deep house</span><span class="chip">Acoustic folk</span><span class="chip">Hip-hop</span><span class="chip">Trap</span><span class="chip">Phonk</span><span class="chip">Funk</span><span class="chip">Jazz</span><span class="chip">Cinematic</span><span class="chip">Future bass</span><span class="chip">Tropical house</span><span class="chip">Nu-disco</span><span class="chip">R&amp;B</span><span class="chip">Soul</span><span class="chip">Bossa nova</span><span class="chip">Reggae</span><span class="chip">Afrobeats</span><span class="chip">Amapiano</span><span class="chip">Drum &amp; bass</span><span class="chip">UK garage</span><span class="chip">Rock</span><span class="chip">Orchestral</span><span class="chip">Chiptune</span></span></div>
+              <div class="mg"><span>Mood</span><span class="chips"><span class="chip">Calm</span><span class="chip">Warm</span><span class="chip">Dreamy</span><span class="chip on">Nostalgic</span><span class="chip">Focused</span><span class="chip">Uplifting</span><span class="chip">Confident</span><span class="chip">Playful</span><span class="chip">Energetic</span><span class="chip">Emotional</span><span class="chip">Mysterious</span><span class="chip">Tense</span><span class="chip">Dark</span><span class="chip">Happy</span><span class="chip">Romantic</span><span class="chip">Inspiring</span><span class="chip">Epic</span><span class="chip">Luxurious</span><span class="chip">Melancholic</span><span class="chip">Quirky</span><span class="chip">Groovy</span><span class="chip">Adventurous</span><span class="chip">Aggressive</span></span></div>
+              <div class="mg"><span>Sound</span><span class="chips"><span class="chip">Soft piano</span><span class="chip">Rhodes</span><span class="chip on">Warm pads</span><span class="chip">Synth arp</span><span class="chip">Muted guitar</span><span class="chip">Acoustic guitar</span><span class="chip">Strings</span><span class="chip">Pizzicato</span><span class="chip">Marimba</span><span class="chip">Bells</span><span class="chip">Sub bass</span><span class="chip">808 bass</span><span class="chip">Light percussion</span><span class="chip">Brushed drums</span><span class="chip">Claps</span><span class="chip">Vinyl crackle</span><span class="chip">Saxophone</span><span class="chip">Brass</span><span class="chip">Flute</span><span class="chip">Solo violin</span><span class="chip">Cello</span><span class="chip">Choir</span><span class="chip">Ukulele</span><span class="chip">Harp</span><span class="chip">Kalimba</span><span class="chip">Hand drums</span><span class="chip">Electric guitar</span><span class="chip">Synth lead</span></span></div>
+              <div class="mg"><span>From Tags</span><span class="chips"><span class="chip on">darksynth</span><span class="chip on">retrowave</span><span class="chip on">menacing</span><span class="chip on">analog bass arpeggio</span></span></div>
+              <div class="opts"><label><input type="checkbox" checked>Instrumental</label><label><input type="checkbox" checked>Prompt enhancer</label></div>
+            </div>
+            <div class="recent"><span>Recent</span><span class="rc">Rainy Midnight Drive<b>▶1</b><b>▶2</b></span><span class="rc">Windows Down to the Sea<b>▶1</b><b>▶2</b></span><span class="rc">Neon Rain — Suno is making it… 24 s</span></div>
+            <div class="ask"><textarea placeholder="In your words - optional"></textarea><button class="btn pri">Generate</button></div>
+            <div class="meta"><span>into Music / Night drives</span><span>$0.06 · two tracks</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tl">
+      <div class="tl-h"><span>▶</span><span>0:00.0</span><span class="sp"></span><button class="btn s">Render</button></div>
+      <div class="lanes">
+        <div><div class="ruler"></div><div class="ln">Video</div><div class="ln">Audio 1</div><div class="ln">Audio 2</div></div>
+        <div><div class="ruler">0:00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0:05</div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div></div>
+      </div>
+    </div>
+  </div>
+</div></figure><figure><figcaption>Tags</figcaption><div class="frame">
+  <div class="app vd">
+    <div class="top"><span class="name">UGC Music Studio</span><span class="sp"></span><span class="lnk">Jobs <b>1</b></span><span class="lnk">API keys</span></div>
+    <div class="main">
+      <div class="lib">
+        <div class="lib-h"><span>Library</span><span><span>+ Folder</span><span>Import</span></span></div>
+        <div class="tree">
+          <div class="tn"><span class="c">▾</span>Music</div>
+          <div class="tn k2 on">Night drives</div>
+          <div class="tn k2">Ads</div>
+          <div class="tn"><span class="c">▸</span>Images</div>
+          <div class="tn"><span class="c"></span>Video</div>
+          <div class="tn"><span class="c"></span>Archive</div>
+        </div>
+        <div class="files-h"><span>Music / Night drives</span><span>Date · Name</span></div>
+        <div class="files">
+          <div class="fr on"><span class="n">Rainy Midnight Drive · 1</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Rainy Midnight Drive · 2</span><span class="w"></span><span class="t">1:30</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 1</span><span class="w"></span><span class="t">3:18</span></div>
+          <div class="fr"><span class="n">Windows Down to the Sea · 2</span><span class="w"></span><span class="t">3:03</span></div>
+          <div class="fr"><span class="n">Neon Rain · 1</span><span class="w"></span><span class="t">1:04</span></div>
+          <div class="fr"><span class="n">Neon Rain · 2</span><span class="w"></span><span class="t">1:03</span></div>
+        </div>
+        <div class="player"><button class="pb">▶</button><span class="wv"></span><span class="t">0:27 / 1:30</span></div>
+      </div>
+      <div class="work">
+        <div class="tabs"><span class="tab on" data-t="tags">Tags</span><span class="tab" data-t="music">Music</span><span class="tab">Animate</span><span class="tab">Images</span></div>
+
+        <div class="pane on" data-p="tags">
+          <div class="chats">
+            <button class="btn s new">+ New chat</button>
+            <div class="ch on">Dark Miami Synthwave<small>21:42</small></div>
+            <div class="ch">Melancholic Night Drive<small>21:10</small></div>
+            <div class="ch">Morning Disco Pop<small>вчера</small></div>
+          </div>
+          <div class="thread">
+            <div class="msgs">
+              <div class="you">хочу тёмный synthwave как в Майами 80-х, без вокала</div>
+              <div class="ans">
+                <div class="by">Claude Sonnet 5.5 · 2 searches · $0.03 · 19 s</div>
+                <p>Это <b>darksynth</b> с неоновым «майамским» налётом: аналоговые пэды, басовая арпеджиата в восьмых, гейтированные барабаны 80-х, темп 95–110 BPM, минор. Держи вокал за пределами стиля и вынеси «vocals» в Exclude.</p>
+                <div class="grp"><span>Genre</span><span class="chips"><span class="chip on">darksynth</span><span class="chip">outrun</span><span class="chip on">retrowave</span><span class="chip">synthwave</span><span class="chip">electro</span><span class="chip">cyberpunk</span></span></div>
+                <div class="grp"><span>Mood</span><span class="chips"><span class="chip">nocturnal</span><span class="chip on">menacing</span><span class="chip">neon-lit</span><span class="chip">driving</span><span class="chip">cinematic</span><span class="chip">hypnotic</span></span></div>
+                <div class="grp"><span>Sound</span><span class="chips"><span class="chip on">analog bass arpeggio</span><span class="chip">gated reverb drums</span><span class="chip">detuned pads</span><span class="chip">105 bpm</span><span class="chip">no vocals</span></span></div>
+              </div>
+            </div>
+            <div class="ask"><textarea placeholder="Describe the music you want…"></textarea><button class="btn pri">Send</button></div>
+          </div>
+        </div>
+
+        <div class="pane" data-p="music">
+          <div class="mus">
+            <div class="mus-h">
+              <span class="seg"><span class="on">Simple</span><span>Custom</span><span>Lyrics</span></span>
+              <span class="muted">Model</span><select class="sel"><option>V6</option></select>
+              <span class="muted">Length</span><input class="num" placeholder="auto"><span class="faint">s</span>
+            </div>
+            <div class="mus-b">
+              <div class="mg"><span>Genre</span><span class="chips"><span class="chip">Lo-fi</span><span class="chip">Chillhop</span><span class="chip">Ambient</span><span class="chip">Neo-classical</span><span class="chip">Indie pop</span><span class="chip on">Synthwave</span><span class="chip">Corporate</span><span class="chip">Electronic</span><span class="chip">Deep house</span><span class="chip">Acoustic folk</span><span class="chip">Hip-hop</span><span class="chip">Trap</span><span class="chip">Phonk</span><span class="chip">Funk</span><span class="chip">Jazz</span><span class="chip">Cinematic</span><span class="chip">Future bass</span><span class="chip">Tropical house</span><span class="chip">Nu-disco</span><span class="chip">R&amp;B</span><span class="chip">Soul</span><span class="chip">Bossa nova</span><span class="chip">Reggae</span><span class="chip">Afrobeats</span><span class="chip">Amapiano</span><span class="chip">Drum &amp; bass</span><span class="chip">UK garage</span><span class="chip">Rock</span><span class="chip">Orchestral</span><span class="chip">Chiptune</span></span></div>
+              <div class="mg"><span>Mood</span><span class="chips"><span class="chip">Calm</span><span class="chip">Warm</span><span class="chip">Dreamy</span><span class="chip on">Nostalgic</span><span class="chip">Focused</span><span class="chip">Uplifting</span><span class="chip">Confident</span><span class="chip">Playful</span><span class="chip">Energetic</span><span class="chip">Emotional</span><span class="chip">Mysterious</span><span class="chip">Tense</span><span class="chip">Dark</span><span class="chip">Happy</span><span class="chip">Romantic</span><span class="chip">Inspiring</span><span class="chip">Epic</span><span class="chip">Luxurious</span><span class="chip">Melancholic</span><span class="chip">Quirky</span><span class="chip">Groovy</span><span class="chip">Adventurous</span><span class="chip">Aggressive</span></span></div>
+              <div class="mg"><span>Sound</span><span class="chips"><span class="chip">Soft piano</span><span class="chip">Rhodes</span><span class="chip on">Warm pads</span><span class="chip">Synth arp</span><span class="chip">Muted guitar</span><span class="chip">Acoustic guitar</span><span class="chip">Strings</span><span class="chip">Pizzicato</span><span class="chip">Marimba</span><span class="chip">Bells</span><span class="chip">Sub bass</span><span class="chip">808 bass</span><span class="chip">Light percussion</span><span class="chip">Brushed drums</span><span class="chip">Claps</span><span class="chip">Vinyl crackle</span><span class="chip">Saxophone</span><span class="chip">Brass</span><span class="chip">Flute</span><span class="chip">Solo violin</span><span class="chip">Cello</span><span class="chip">Choir</span><span class="chip">Ukulele</span><span class="chip">Harp</span><span class="chip">Kalimba</span><span class="chip">Hand drums</span><span class="chip">Electric guitar</span><span class="chip">Synth lead</span></span></div>
+              <div class="mg"><span>From Tags</span><span class="chips"><span class="chip on">darksynth</span><span class="chip on">retrowave</span><span class="chip on">menacing</span><span class="chip on">analog bass arpeggio</span></span></div>
+              <div class="opts"><label><input type="checkbox" checked>Instrumental</label><label><input type="checkbox" checked>Prompt enhancer</label></div>
+            </div>
+            <div class="recent"><span>Recent</span><span class="rc">Rainy Midnight Drive<b>▶1</b><b>▶2</b></span><span class="rc">Windows Down to the Sea<b>▶1</b><b>▶2</b></span><span class="rc">Neon Rain — Suno is making it… 24 s</span></div>
+            <div class="ask"><textarea placeholder="In your words - optional"></textarea><button class="btn pri">Generate</button></div>
+            <div class="meta"><span>into Music / Night drives</span><span>$0.06 · two tracks</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tl">
+      <div class="tl-h"><span>▶</span><span>0:00.0</span><span class="sp"></span><button class="btn s">Render</button></div>
+      <div class="lanes">
+        <div><div class="ruler"></div><div class="ln">Video</div><div class="ln">Audio 1</div><div class="ln">Audio 2</div></div>
+        <div><div class="ruler">0:00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0:05</div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div><div class="lt" style="height:30px"></div></div>
+      </div>
+    </div>
+  </div>
+</div></figure></div></section>
+</div>
+</body>
+</html>

@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>UGC Music Studio</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <script src="/js/theme-boot.js"></script>
   <link rel="stylesheet" href="/css/app.css">
-  <link rel="stylesheet" href="/css/music.css">
 </head>
 <body>
   <header class="top">
-    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>UGC Music Studio</div>
-    <div class="top-right">
-      <span class="fake-chip" id="fake-chip" hidden title="Free test runs: nothing paid is asked">FAKE</span>
-      <button class="btn ghost" id="jobs-open" title="The journal of generations">Jobs</button>
-      <button class="btn ghost" id="keys-open">API keys<span class="keys-dot" id="keys-dot" hidden></span></button>
-    </div>
+    <span class="brand">UGC Music Studio</span>
+    <span class="top-sp"></span>
+    <span class="fake-chip" id="fake-chip" hidden title="Free test runs: nothing paid is asked">FAKE</span>
+    <button class="btn ghost" id="jobs-open" title="The journal of generations">Jobs</button>
+    <button class="btn ghost" id="keys-open">API keys<span class="keys-dot" id="keys-dot" hidden></span></button>
+    <button class="btn ghost" id="theme-toggle" title="Light or dark">Light</button>
   </header>
 
   <div class="app" id="app">
@@ -54,31 +54,18 @@
         </nav>
         <section class="panel tags" role="tabpanel" data-panel="tags">
           <aside class="tg-side">
-            <button class="btn tg-new" id="tg-new">+ New chat</button>
+            <button class="btn s tg-new" id="tg-new">+ New chat</button>
             <div class="tg-chats" id="tg-chats" role="list"></div>
           </aside>
           <div class="tg-main">
             <div class="tg-thread" id="tg-thread"></div>
-            <div class="tg-mix" id="tg-mix">
-              <span class="tg-mix-label">Mix</span>
-              <span class="tg-mix-tags" id="tg-mix-tags"></span>
-              <input class="tg-mix-add" id="tg-mix-add" placeholder="+ tag" maxlength="40" spellcheck="false">
-              <button class="btn ghost s" id="tg-mix-copy" title="Copy the Mix as one line">Copy</button>
-              <button class="btn ghost s" id="tg-mix-clear" title="Take every tag out of the Mix">Clear</button>
-            </div>
-            <form class="tg-ask" id="tg-ask">
-              <textarea class="tg-input" id="tg-input" rows="1" maxlength="4000" placeholder="Describe the music you want…"></textarea>
+            <form class="ask" id="tg-ask">
+              <textarea class="ask-in" id="tg-input" rows="1" maxlength="4000" placeholder="Describe the music you want…"></textarea>
               <button class="btn primary" id="tg-send" type="submit">Send</button>
             </form>
-            <div class="tg-foot" id="tg-foot"></div>
           </div>
         </section>
-        <section class="panel" role="tabpanel" data-panel="music" hidden>
-          <div class="placeholder">
-            <h2>Suno</h2>
-            <p>Simple and Custom modes, lyrics, sounds. Two tracks a press, straight into the library and onto the timeline.</p>
-          </div>
-        </section>
+        <section class="panel music" role="tabpanel" data-panel="music" hidden></section>
         <section class="panel" role="tabpanel" data-panel="animate" hidden>
           <div class="placeholder">
             <h2>Animate</h2>
@@ -94,16 +81,16 @@
       </main>
     </div>
 
-    <div class="sash sash-h" id="sash-tl" role="separator" aria-orientation="horizontal" title="Drag to resize"></div>
+    <div class="sash sash-h sash-tl" id="sash-tl" role="separator" aria-orientation="horizontal" title="Drag to resize the timeline"></div>
 
     <section class="timeline" id="timeline" aria-label="Timeline">
       <div class="tl-head">
-        <button class="btn icon" id="tl-play" disabled title="Play">
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+        <button class="btn icon ghost" id="tl-play" disabled title="Play">
+          <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
         </button>
         <span class="tl-time" id="tl-time">0:00.0</span>
         <span class="tl-spacer"></span>
-        <button class="btn" id="tl-render" disabled title="Renders the video and the music into one file">Render</button>
+        <button class="btn s" id="tl-render" disabled title="Renders the video and the music into one file">Render</button>
       </div>
       <div class="tl-body">
         <div class="tl-names">
@@ -127,7 +114,7 @@
       <div class="dialog-head">
         <h2 id="keys-title">API keys</h2>
         <button class="btn icon ghost" id="keys-close" title="Close (Esc)">
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3.5 3.5l9 9m0-9l-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3.5 3.5l9 9m0-9l-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         </button>
       </div>
       <form class="dialog-body" id="keys-form" autocomplete="off"></form>

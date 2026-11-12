@@ -54,9 +54,26 @@ function paintRuler() {
   }
 }
 
+// ── The theme (the owner, 2026-11-12: monochrome, dark or light) ─────────────
+
+function initTheme() {
+  const btn = $('theme-toggle');
+  const paint = () => { btn.textContent = document.documentElement.getAttribute('data-theme') === 'light' ? 'Dark' : 'Light'; };
+  btn.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('ms_theme', next); } catch { /* not kept */ }
+    paint();
+    // The waves drawn on canvases take the new colours.
+    window.dispatchEvent(new Event('resize'));
+  });
+  paint();
+}
+
 // ── Start ───────────────────────────────────────────────────────────────────
 
 async function start() {
+  initTheme();
   initSashes();
   initTabs();
   initKeys();

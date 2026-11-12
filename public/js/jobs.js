@@ -51,28 +51,28 @@ function _row(j) {
   row.append(st);
   const acts = el('div', 'jb-acts');
   if (j.state === 'pending') {
-    const b = el('button', 'mu-link', 'Stop');
+    const b = el('button', 'link', 'Stop');
     b.title = 'Stop waiting for it';
     b.addEventListener('click', () => _act('/api/music/jobs/' + j.id + '/stop'));
     acts.append(b);
   } else {
     if (j.kind === 'music' && j.state === 'done' && (j.results || []).length) {
-      const b = el('button', 'mu-link', 'show');
+      const b = el('button', 'link', 'show');
       b.addEventListener('click', () => { revealFile('music', j.results[0].rel); close(); });
       acts.append(b);
     }
     if (j.kind === 'lyrics' && (j.lyrics || []).length) {
-      const b = el('button', 'mu-link', 'Use in Custom');
+      const b = el('button', 'link', 'Use in Custom');
       b.title = 'The first text into Custom';
       b.addEventListener('click', () => { const l = j.lyrics[0]; useLyrics(l.title, l.text); close(); });
       acts.append(b);
     }
     if (!j.refused) {
-      const b = el('button', 'mu-link', 'Retry · pays again');
+      const b = el('button', 'link', 'Retry · pays again');
       b.addEventListener('click', () => _act('/api/music/jobs/' + j.id + '/retry', (r) => JOBS.put(r.job)));
       acts.append(b);
     }
-    const x = el('button', 'mu-link is-quiet', '✕');
+    const x = el('button', 'link', '✕');
     x.title = 'Take it out of the journal (the files stay)';
     x.addEventListener('click', () => _act('/api/music/jobs/' + j.id + '/forget', () => JOBS.drop(j.id)));
     acts.append(x);
@@ -90,7 +90,7 @@ function _paint(jobs) {
   if (!panel) return;
   const list = panel.querySelector('.jb-list');
   list.textContent = '';
-  if (!jobs.length) list.append(el('div', 'mu-hint', 'Every press of Generate is written here at once and followed to its end.'));
+  if (!jobs.length) list.append(el('div', 'hint', 'Every press of Generate is written here at once and followed to its end.'));
   for (const j of jobs) list.append(_row(j));
 }
 

@@ -3,9 +3,9 @@
 
 import { remembered, remember } from './api.js';
 
-const LIB = { def: 320, min: 220, max: 560, workMin: 420 };
-const TL = { def: 220, min: 120, upperMin: 220 };
-const TREE = { def: 200, min: 80, filesMin: 160 };
+const LIB = { def: 280, min: 200, max: 560, workMin: 420 };
+const TL = { def: 160, min: 90, upperMin: 200 };
+const TREE = { def: 180, min: 60, filesMin: 120 };
 
 const root = document.documentElement;
 
