@@ -330,6 +330,8 @@ function _saveMix() {
 }
 
 function paintMix() {
+  // The Music tab follows the Mix (phase 3, "From Tags").
+  window.dispatchEvent(new CustomEvent('ms:mix', { detail: S.mix.slice() }));
   const host = $('tg-mix-tags');
   host.textContent = '';
   if (!S.mix.length) host.append(el('span', 'tg-mix-empty', 'press tags in an answer to mix them'));

@@ -5,6 +5,8 @@ import { initSashes } from './sash.js';
 import { initKeys } from './keys.js';
 import { initLibrary } from './library/main.js';
 import { initTags } from './tags/main.js';
+import { initMusic } from './music/main.js';
+import { initJobs } from './jobs.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -60,6 +62,8 @@ async function start() {
   initKeys();
   initLibrary();
   initTags();
+  initMusic();
+  initJobs();
   paintRuler();
   new ResizeObserver(paintRuler).observe($('tl-lanes'));
   try {

@@ -74,6 +74,8 @@ const L = {
     remember({ open: { root: S.root, rel: S.rel } });
     L.tree.mark();
     L.files.paint();
+    // The Music tab files its tracks into the folder selected here (phase 3, the owner's C5).
+    window.dispatchEvent(new CustomEvent('ms:folder', { detail: { root: S.root, rel: S.rel } }));
     return r;
   },
 
@@ -158,7 +160,29 @@ function _guardDrops() {
   }
 }
 
+/** A track of the library into the player, playing (the Music tab's Recent). */
+export function playTrack(root, rel, name, dur) {
+  if (!L.player) return;
+  const base = String(name || rel.split('/').pop()).replace(/\.[^.]+$/, '');
+  L.player.load(root, { rel, name: name || rel.split('/').pop(), base, duration: dur || 0, kind: 'music' }, { play: true });
+}
+
+/** The folder a file lies in opens with the file picked. */
+export async function revealFile(root, rel) {
+  try {
+    await L.loadTree();
+    await L.open(root, parentRel(rel), { pick: [rel] });
+  } catch (e) {
+    showError(e.message);
+  }
+}
+
 export async function initLibrary() {
+  // A press of the Music tab landed: the library is read again (never under a name being typed).
+  window.addEventListener('ms:library-changed', () => {
+    if (document.querySelector('.rename-input')) return;
+    L.refresh().catch(() => {});
+  });
   L.tree = initTree(L);
   L.files = initFiles(L);
   L.player = initPlayer(L);
