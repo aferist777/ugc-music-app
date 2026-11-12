@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UGC Music Studio</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>UGC Music Studio</div>
+    <div class="top-right">
+      <span class="fake-chip" id="fake-chip" hidden title="Free test runs: nothing paid is asked">FAKE</span>
+      <button class="btn ghost" id="jobs-open" disabled title="Generations appear here once Suno is in">Jobs</button>
+      <button class="btn ghost" id="keys-open">API keys<span class="keys-dot" id="keys-dot" hidden></span></button>
+    </div>
+  </header>
+
+  <div class="app" id="app">
+    <div class="upper">
+      <aside class="library" id="library" aria-label="Library">
+        <div class="pane-head">Library</div>
+        <ul class="roots" id="roots"></ul>
+        <p class="pane-note">Folders and files come in the next step.</p>
+      </aside>
+
+      <div class="sash sash-v" id="sash-lib" role="separator" aria-orientation="vertical" title="Drag to resize"></div>
+
+      <main class="work">
+        <nav class="tabs" role="tablist" aria-label="Tools">
+          <button class="tab" role="tab" data-tab="tags">Tags</button>
+          <button class="tab" role="tab" data-tab="music">Music</button>
+          <button class="tab" role="tab" data-tab="animate">Animate</button>
+          <button class="tab" role="tab" data-tab="images">Images</button>
+        </nav>
+        <section class="panel" role="tabpanel" data-panel="tags">
+          <div class="placeholder">
+            <h2>Tag assistant</h2>
+            <p>Describe the music you want. The assistant searches the web if it needs to and answers with genre, mood and sound tags to mix.</p>
+          </div>
+        </section>
+        <section class="panel" role="tabpanel" data-panel="music" hidden>
+          <div class="placeholder">
+            <h2>Suno</h2>
+            <p>Simple and Custom modes, lyrics, sounds. Two tracks a press, straight into the library and onto the timeline.</p>
+          </div>
+        </section>
+        <section class="panel" role="tabpanel" data-panel="animate" hidden>
+          <div class="placeholder">
+            <h2>Animate</h2>
+            <p>A picture and a few words about the motion become a clip with Grok 1.5.</p>
+          </div>
+        </section>
+        <section class="panel" role="tabpanel" data-panel="images" hidden>
+          <div class="placeholder">
+            <h2>Images</h2>
+            <p>Models: in development.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="sash sash-h" id="sash-tl" role="separator" aria-orientation="horizontal" title="Drag to resize"></div>
+
+    <section class="timeline" id="timeline" aria-label="Timeline">
+      <div class="tl-head">
+        <button class="btn icon" id="tl-play" disabled title="Play">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+        </button>
+        <span class="tl-time" id="tl-time">0:00.0</span>
+        <span class="tl-spacer"></span>
+        <button class="btn" id="tl-render" disabled title="Renders the video and the music into one file">Render</button>
+      </div>
+      <div class="tl-body">
+        <div class="tl-names">
+          <div class="tl-name tl-name-ruler"></div>
+          <div class="tl-name">Video</div>
+          <div class="tl-name">Audio 1</div>
+          <div class="tl-name">Audio 2</div>
+        </div>
+        <div class="tl-lanes" id="tl-lanes">
+          <div class="tl-ruler" id="tl-ruler"></div>
+          <div class="tl-lane" data-lane="video"></div>
+          <div class="tl-lane" data-lane="audio1"></div>
+          <div class="tl-lane" data-lane="audio2"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay" id="keys-overlay" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="keys-title">
+      <div class="dialog-head">
+        <h2 id="keys-title">API keys</h2>
+        <button class="btn icon ghost" id="keys-close" title="Close (Esc)">
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3.5 3.5l9 9m0-9l-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <form class="dialog-body" id="keys-form" autocomplete="off"></form>
+      <div class="dialog-foot">
+        <span class="dialog-msg" id="keys-msg" role="status"></span>
+        <button class="btn primary" id="keys-save" type="submit" form="keys-form">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

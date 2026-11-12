@@ -1,0 +1,5 @@
+node_modules/
+# The owner's library and the test library: keys, media, the app's stores.
+/library/
+/dev-library/
+*.log
