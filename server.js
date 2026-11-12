@@ -23,6 +23,7 @@ function createApp() {
   app.use(express.json({ limit: '1mb' }));
   app.use('/api', require('./routes/app'));
   app.use('/api', require('./routes/library'));
+  app.use('/api', require('./routes/tags'));
   app.use('/api', (req, res) => res.status(404).json({ error: 'no such route' }));
   // The library's files by their address: /media/<root>/<folders>/<name> (ranges answered - the player seeks).
   for (const r of ROOTS) {

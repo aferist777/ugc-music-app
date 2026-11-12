@@ -4,6 +4,7 @@ import { api, remembered, remember } from './api.js';
 import { initSashes } from './sash.js';
 import { initKeys } from './keys.js';
 import { initLibrary } from './library/main.js';
+import { initTags } from './tags/main.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -58,6 +59,7 @@ async function start() {
   initTabs();
   initKeys();
   initLibrary();
+  initTags();
   paintRuler();
   new ResizeObserver(paintRuler).observe($('tl-lanes'));
   try {
