@@ -5,14 +5,15 @@
 // the timeline (i8), or dropped on it - and for Kling the LOOP tick (on: the clip ends on its start frame) or,
 // unticked, a last frame dropped on its place; then where the clip goes (the Video folder selected in the library, else
 // its root - i10). On the right the chat of clips, the Prompt enhancer tick (Claude Sonnet 5.5 sees the frame; grey with
-// no Anthropic key - the words go as they are) and the field.
+// no Anthropic key - the words go as they are) and the field. Loop on (phase 6, the owner's P9): the tick says "Loop
+// agent" and works by itself - the second agent writes your words and the loop together; the enhancer rests.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { api } from '../api.js';
 import { showError } from '../notice.js';
 import * as JOBS from '../music/jobs-store.js';
 import {
-  el, thumbOf, money, loadState, keeper, select, frame, resultTile, chatOf, paintThread,
+  el, thumbOf, coverOf, money, loadState, keeper, select, frame, resultTile, chatOf, paintThread,
   pressHead, pressLine, bringIn, hasFiles, draggedPictures, onKeys,
 } from './common.js';
 
@@ -46,7 +47,7 @@ function _slot(key, hint) {
   const box = el('div', 'vz-frame vz-drop' + (p ? '' : ' is-empty'));
   if (p) {
     const im = el('img');
-    im.src = thumbOf(p);
+    im.src = coverOf(p);
     im.alt = '';
     im.addEventListener('error', () => box.classList.add('is-gone'));
     box.title = p.rel.split('/').join(' / ');
@@ -114,9 +115,7 @@ function paintSide() {
       side.append(_slot('last', 'Drop a picture here - or none: the model decides how it ends'));
     }
   }
-  const into = el('div', 'vz-into', 'into ' + (folder.root === 'video' && folder.rel ? 'Video / ' + folder.rel.split('/').join(' / ') : 'Video'));
-  into.title = 'The clips go into the Video folder selected in the library; none selected - the root of Video.';
-  side.append(into);
+  ui.setLoopAgent(!!m.loop && S.loop !== false);
 }
 
 // ── The chat ────────────────────────────────────────────────────────────────
@@ -178,10 +177,12 @@ export async function initAnimate() {
   ui = frame(panel, {
     placeholder: 'How it moves - in your words, any language',
     enhanceTitle: 'Claude Sonnet 5.5 looks at the frame, adds to your words and sends it at once (about a cent)',
+    loopTitle: 'Loop is on: the loop agent (Claude Sonnet 5.5) looks at the frame, keeps what you asked for and adds everything '
+      + 'the loop needs to come back to its start frame - the people, the rain, the light, the camera. It works by itself (about a cent).',
     S, keep, onGo: generate,
   });
   // The page's events are heard from the start - the library speaks before the models are read.
-  window.addEventListener('ms:folder', (e) => { folder = e.detail || folder; paintSide(); });
+  window.addEventListener('ms:folder', (e) => { folder = e.detail || folder; });
   // Animate under a picture of Images, or a timeline picture's right button: it becomes the start frame, the tab opens.
   window.addEventListener('ms:animate', (e) => {
     if (!e.detail || !e.detail.rel) return;

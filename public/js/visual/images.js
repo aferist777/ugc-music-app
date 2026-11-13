@@ -121,9 +121,6 @@ function paintSide() {
   ct.append(el('span', 'vz-k', 'Count'), seg(info.counts.map(n => [n, '×' + n]), S.count, (v) => { S.count = v; keep(); paintSide(); }));
   side.append(ct);
   side.append(_refsBox());
-  const into = el('div', 'vz-into', 'into ' + (folder.root === 'images' && folder.rel ? 'Images / ' + folder.rel.split('/').join(' / ') : 'Images'));
-  into.title = 'The pictures go into the Images folder selected in the library; none selected - the root of Images.';
-  side.append(into);
 }
 
 // ── The chat ────────────────────────────────────────────────────────────────
@@ -210,7 +207,7 @@ export async function initImages() {
   });
   // The page's events are heard from the start - the library and the timeline speak before the models are read.
   window.addEventListener('ms:chat-changed', (e) => { if (e.detail && e.detail.kind === 'image' && chat) chat.read(); });
-  window.addEventListener('ms:folder', (e) => { folder = e.detail || folder; paintSide(); });
+  window.addEventListener('ms:folder', (e) => { folder = e.detail || folder; });
   // The frame follows the project open on the timeline (the owner's i4); a pick holds until it changes.
   const follow = (e) => { const f = e.detail && e.detail.format; if (f && info.aspects.includes(f) && f !== S.aspect) { S.aspect = f; keep(); paintSide(); } };
   window.addEventListener('ms:project-opened', follow);

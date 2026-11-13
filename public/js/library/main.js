@@ -81,7 +81,7 @@ const L = {
       if (!here.has(S.anchor)) S.anchor = null;
     }
     remember({ open: { root: S.root, rel: S.rel } });
-    L.tree.mark();
+    L.tree.mark({ reveal: moved });
     L.files.paint();
     // The Music tab files its tracks into the folder selected here (phase 3, the owner's C5).
     window.dispatchEvent(new CustomEvent('ms:folder', { detail: { root: S.root, rel: S.rel } }));

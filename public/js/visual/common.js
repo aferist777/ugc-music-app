@@ -16,6 +16,9 @@ import * as JOBS from '../music/jobs-store.js';
 export { el };
 
 export const thumbOf = (p) => '/api/library/thumb?' + q({ root: p.root, rel: p.rel });
+// A tile's cover (phase 6, the owner: "small copies in the interface, the whole file only when it is pressed"): the
+// picture or the clip's frame at most 512 px, made once by the server, loaded only when it comes into sight.
+export const coverOf = (p) => '/api/library/thumb?' + q({ root: p.root, rel: p.rel, size: 'm512' });
 const baseOf = (rel) => String(rel || '').split('/').pop().replace(/\.[^.]+$/, '');
 export const money = (n) => '$' + (Math.round(n * 1000) / 1000);
 
@@ -61,10 +64,12 @@ export function select(options, value, onPick, title) {
 // ── The frame of a tab ──────────────────────────────────────────────────────
 
 /**
- * Builds the tab: { side, thread, input, go, setEnhancer, enhancing } - the caller fills `side` and answers the press;
- * `setEnhancer(on)` - is there an enhancer (an Anthropic key); `enhancing()` - is the press to be enhanced.
+ * Builds the tab: { side, thread, input, go, setEnhancer, setLoopAgent, enhancing } - the caller fills `side` and answers
+ * the press; `setEnhancer(on)` - is there an enhancer (an Anthropic key); `setLoopAgent(on)` - Loop is on: the tick
+ * says "Loop agent", always on while there is a key (the owner's P9 - the enhancer rests); `enhancing()` - is the
+ * press to be enhanced.
  */
-export function frame(panel, { placeholder, enhanceTitle, S, keep, onGo }) {
+export function frame(panel, { placeholder, enhanceTitle, loopTitle, S, keep, onGo }) {
   panel.textContent = '';
   panel.classList.add('vz');
   const side = el('aside', 'vz-side');
@@ -78,15 +83,22 @@ export function frame(panel, { placeholder, enhanceTitle, S, keep, onGo }) {
   box.checked = S.enhance !== false;
   box.addEventListener('change', () => { S.enhance = box.checked; keep(); });
   let present = true;
-  // No key: the tick shows off and cannot be pressed; the person's own choice is kept for when a key is there.
-  const setEnhancer = (on) => {
-    present = !!on;
-    box.disabled = !present;
-    box.checked = present && S.enhance !== false;
+  let looping = false;
+  const word = el('span', null, 'Prompt enhancer');
+  // No key: the tick shows off and cannot be pressed; the person's own choice is kept for when a key is there. Loop on:
+  // "Loop agent", on and not pressed - it works by itself.
+  const paintTick = () => {
+    word.textContent = looping ? 'Loop agent' : 'Prompt enhancer';
+    box.disabled = !present || looping;
+    box.checked = present && (looping || S.enhance !== false);
     lab.classList.toggle('is-off', !present);
-    lab.title = present ? enhanceTitle : 'No Anthropic key - your words go as they are. Add the key in API keys to have them enhanced.';
+    lab.classList.toggle('is-fixed', present && looping);
+    lab.title = !present ? 'No Anthropic key - your words go as they are. Add the key in API keys to have them '
+      + (looping ? 'written for the loop.' : 'enhanced.') : looping ? loopTitle : enhanceTitle;
   };
-  lab.append(box, document.createTextNode('Prompt enhancer'));
+  const setEnhancer = (on) => { present = !!on; paintTick(); };
+  const setLoopAgent = (on) => { looping = !!on && !!loopTitle; paintTick(); };
+  lab.append(box, word);
   opts.append(lab);
   const ask = el('form', 'ask');
   const input = el('textarea', 'ask-in');
@@ -111,7 +123,7 @@ export function frame(panel, { placeholder, enhanceTitle, S, keep, onGo }) {
   // Measured again whenever its width changes - a tab drawn while hidden measures nothing.
   let width = 0;
   new ResizeObserver(() => { if (input.offsetWidth !== width) { width = input.offsetWidth; grow(); } }).observe(input);
-  return { side, thread, input, go, setEnhancer, enhancing: () => present && S.enhance !== false };
+  return { side, thread, input, go, setEnhancer, setLoopAgent, enhancing: () => present && (looping || S.enhance !== false) };
 }
 
 // ── Opened large over its own tab (the owner's i14) ─────────────────────────
@@ -151,7 +163,7 @@ function peek(panel, item) {
   peekOpen = { box, pop: pushLayer(_closePeek) };
 }
 
-// ── A made file: pressed - large; dragged - onto the timeline ──────────────
+// ── A made file: its cover; pressed - large (the whole file only then); dragged - onto the timeline ──
 
 export function resultTile(panel, r, { video } = {}) {
   const f = el('figure', 'vz-res' + (r.gone ? ' is-gone' : ''));
@@ -161,19 +173,17 @@ export function resultTile(panel, r, { video } = {}) {
     return f;
   }
   f.title = r.rel.split('/').join(' / ') + ' - press to open; drag onto the timeline';
+  const im = el('img');
+  im.loading = 'lazy';
+  im.decoding = 'async';
+  im.src = coverOf(r);
+  im.alt = baseOf(r.rel);
+  im.draggable = false;
+  f.append(im);
   if (video) {
-    const v = el('video');
-    v.src = mediaUrl(r.root, r.rel) + '#t=0.1';
-    v.muted = true;
-    v.preload = 'metadata';
-    f.append(v);
-  } else {
-    const im = el('img');
-    im.src = mediaUrl(r.root, r.rel);
-    im.loading = 'lazy';
-    im.alt = baseOf(r.rel);
-    im.draggable = false;
-    f.append(im);
+    const play = el('span', 'vz-play');
+    play.innerHTML = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M5 3v10l8-5z" fill="currentColor"/></svg>';
+    f.append(play);
   }
   f.draggable = true;
   f.addEventListener('dragstart', (e) => {
@@ -245,13 +255,15 @@ export function paintThread(thread, entries, grown, entryEl, emptyText) {
 /** What every press shows: the person's words, the enhanced prompt folded (or why there is none), the line of what it was. */
 export function pressHead(e) {
   const out = [];
-  out.push(el('div', 'vz-you', e.words || '(no words - the enhancer decided)'));
+  const loop = e.agent === 'loop';
+  out.push(el('div', 'vz-you', e.words || (loop ? '(no words - the loop agent decided)' : '(no words - the enhancer decided)')));
   if (e.prompt) {
+    if (loop && e.added) out.push(el('div', 'vz-added', 'added for the loop: ' + e.added));
     const d = el('details', 'vz-prompt');
-    d.append(el('summary', null, 'enhanced prompt · ' + (e.enhancedBy || 'Claude')), el('div', 'vz-prompt-text', e.prompt));
+    d.append(el('summary', null, (loop ? 'loop prompt · ' : 'enhanced prompt · ') + (e.enhancedBy || 'Claude')), el('div', 'vz-prompt-text', e.prompt));
     out.push(d);
   } else if (e.fell) {
-    const f = el('div', 'vz-fell', 'the enhancer failed - your words were sent as they are');
+    const f = el('div', 'vz-fell', 'the ' + (loop ? 'loop agent' : 'enhancer') + ' failed - your words were sent as they are');
     f.title = e.fell;
     out.push(f);
   }

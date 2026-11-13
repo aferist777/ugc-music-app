@@ -6,6 +6,7 @@
   --ink: #eaeaea; --ink2: #bdbdbd; --muted: #8c8c8c; --faint: #5f5f5f;
   --line: #1f1f1f; --line2: #2e2e2e;
   --accent: #eaeaea; --on-accent: #0e0e0e;
+  --wave: #8c8c8c; --wave-top: #6eb0ff; --fade-shade: rgb(0 0 0 / .42);
   --danger: #e5484d; --danger-soft: rgb(229 72 77 / .14);
   --dim: rgb(0 0 0 / .55); --shadow: 0 8px 24px rgb(0 0 0 / .5);
   color-scheme: dark;
@@ -15,6 +16,7 @@
   --ink: #161616; --ink2: #333; --muted: #6b6b6b; --faint: #9a9a9a;
   --line: #e8e8e8; --line2: #d6d6d6;
   --accent: #161616; --on-accent: #ffffff;
+  --wave: #6b6b6b; --wave-top: #1f6fd1; --fade-shade: rgb(255 255 255 / .6);
   --danger: #d93036; --danger-soft: rgb(217 48 54 / .1);
   --dim: rgb(0 0 0 / .25); --shadow: 0 8px 24px rgb(0 0 0 / .12);
   color-scheme: light;
@@ -24,7 +26,7 @@
   --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
   --r: 4px;
   --top-h: 32px; --lib-w: 280px; --tl-h: 190px; --tree-h: 180px;
-  --tl-name-w: 64px; --tl-ruler-h: 18px; --tl-lane-h: 30px;
+  --tl-name-w: 64px; --tl-ruler-h: 18px;
 }
 
 * { box-sizing: border-box; }
@@ -284,7 +286,6 @@ body.is-dragging-h { cursor: row-resize; }
 .vz-ref-x:hover { color: var(--danger); }
 .vz-frame { position: relative; height: 110px; display: grid; place-items: center; overflow: hidden; background: var(--field); }
 .vz-frame img { object-fit: contain; }
-.vz-into { margin-top: auto; padding-top: 4px; color: var(--faint); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vz-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
 .vz-thread { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 14px; }
 .vz-empty { max-width: 420px; margin: 32px auto 0; text-align: center; color: var(--muted); }
@@ -297,12 +298,15 @@ body.is-dragging-h { cursor: row-resize; }
 .vz-prompt summary { cursor: pointer; }
 .vz-prompt-text { margin-top: 3px; padding-left: 12px; color: var(--ink2); white-space: pre-wrap; }
 .vz-fell { font-size: 11px; color: var(--muted); }
+.vz-added { font-size: 11px; color: var(--muted); }
+.check.is-fixed { cursor: default; }
 .vz-in { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .vz-in-pic { width: 24px; height: 24px; object-fit: cover; border-radius: 2px; background: var(--sel); }
 .vz-out { display: flex; flex-wrap: wrap; gap: 8px; }
 .vz-cell { display: flex; flex-direction: column; gap: 2px; }
-.vz-res { margin: 0; height: 130px; border-radius: 2px; overflow: hidden; background: var(--sel); cursor: zoom-in; }
-.vz-res img, .vz-res video { height: 100%; width: auto; display: block; }
+.vz-res { position: relative; margin: 0; height: 130px; min-width: 60px; border-radius: 2px; overflow: hidden; background: var(--sel); cursor: zoom-in; }
+.vz-res img { height: 100%; width: auto; display: block; }
+.vz-play { position: absolute; left: 50%; top: 50%; width: 28px; height: 28px; margin: -14px 0 0 -14px; display: grid; place-items: center; border-radius: 50%; background: rgb(0 0 0 / .55); color: #fff; pointer-events: none; }
 .vz-res.is-gone { width: 90px; display: grid; place-items: center; cursor: default; }
 .vz-gone { color: var(--danger); font-size: 11px; }
 .vz-acts { display: flex; gap: 10px; font-size: 11px; }
@@ -321,13 +325,16 @@ body.is-dragging-h { cursor: row-resize; }
 /* ── Timeline (phase 4) ────────────────────────────────── */
 .timeline { height: var(--tl-h); flex: 0 0 auto; display: flex; background: var(--bar); min-height: 110px; }
 .tl-side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 6px; border-right: 1px solid var(--line); }
+.tl-side-row { display: flex; gap: 4px; }
 .tl-preview { position: relative; flex: 0 0 auto; height: calc(var(--tl-h) - 38px); aspect-ratio: 16 / 9; background: #000; border-radius: 2px; overflow: hidden; cursor: zoom-in; }
 .tl-preview.is-916 { aspect-ratio: 9 / 16; }
 .tl-preview.is-big { position: fixed; z-index: 60; top: 50%; left: 50%; height: min(80vh, 900px); max-width: 92vw; transform: translate(-50%, -50%); cursor: zoom-out; box-shadow: var(--shadow); }
 .tl-dim { position: fixed; inset: 0; z-index: 59; background: var(--dim); }
 .tl-layer { position: absolute; inset: 0; }
 .tl-layer.is-v2 { z-index: 2; }
-.tl-layer video, .tl-layer img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Two players a lane (phase 6): the one shown is on, the next one waits under it, ready. */
+.tl-layer video, .tl-layer img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; }
+.tl-layer .is-on { opacity: 1; }
 .tl-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
 .tl-head { height: 26px; flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 4px; border-bottom: 1px solid var(--line); }
 .tl-time { font-variant-numeric: tabular-nums; color: var(--muted); }
@@ -335,19 +342,21 @@ body.is-dragging-h { cursor: row-resize; }
 .tl-spacer { flex: 1 1 auto; }
 .tl-head .hint { font-size: 11px; white-space: nowrap; }
 .tl-body { flex: 1 1 auto; min-height: 0; display: flex; overflow: auto; }
-.tl-names { width: var(--tl-name-w); flex: 0 0 auto; position: sticky; left: 0; z-index: 3; background: var(--bar); border-right: 1px solid var(--line); }
-.tl-name { height: var(--tl-lane-h); display: flex; align-items: center; padding: 0 8px; color: var(--muted); border-bottom: 1px solid var(--line); white-space: nowrap; }
-.tl-name-ruler { height: var(--tl-ruler-h); }
-.tl-lanes { flex: 0 0 auto; min-width: 0; position: relative; user-select: none; }
-.tl-ruler { height: var(--tl-ruler-h); position: relative; overflow: hidden; border-bottom: 1px solid var(--line); cursor: text; }
+/* The lanes fill the timeline's height, the sound lanes half as tall again as the video ones (phase 6, the owner's P2). */
+.tl-names { width: var(--tl-name-w); flex: 0 0 auto; position: sticky; left: 0; z-index: 3; background: var(--bar); border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+.tl-name { flex: 2 1 0; min-height: 12px; display: flex; align-items: center; padding: 0 8px; color: var(--muted); border-bottom: 1px solid var(--line); white-space: nowrap; overflow: hidden; }
+.tl-name-ruler { flex: 0 0 var(--tl-ruler-h); min-height: 0; }
+.tl-lanes { flex: 0 0 auto; min-width: 0; position: relative; user-select: none; display: flex; flex-direction: column; }
+.tl-ruler { flex: 0 0 var(--tl-ruler-h); position: relative; overflow: hidden; border-bottom: 1px solid var(--line); cursor: text; }
 .tl-tick { position: absolute; top: 2px; font-size: 10px; color: var(--faint); transform: translateX(3px); font-variant-numeric: tabular-nums; pointer-events: none; }
 .tl-tick::before { content: ""; position: absolute; left: -3px; top: -2px; width: 1px; height: 18px; background: var(--line2); }
-.tl-lane { position: relative; height: var(--tl-lane-h); border-bottom: 1px solid var(--line); }
+.tl-lane { position: relative; flex: 2 1 0; min-height: 12px; border-bottom: 1px solid var(--line); }
+.tl-name.is-audio, .tl-lane.is-audio { flex-grow: 3; }
 .tl-lane.is-drop { background: var(--sel); }
 .tl-playhead { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink); pointer-events: none; z-index: 2; }
 .tl-band { position: absolute; z-index: 4; border: 1px solid var(--muted); background: rgb(127 127 127 / .12); pointer-events: none; }
 .clip {
-  position: absolute; top: 3px; bottom: 3px; display: flex; align-items: center; gap: 4px; overflow: hidden;
+  position: absolute; top: 2px; bottom: 2px; display: flex; align-items: center; gap: 4px; overflow: hidden;
   border: 1px solid var(--line2); border-radius: 3px; background: var(--field); cursor: grab;
 }
 .clip::before, .clip::after { content: ""; position: absolute; top: 0; bottom: 0; width: 6px; cursor: ew-resize; z-index: 1; }
@@ -355,8 +364,11 @@ body.is-dragging-h { cursor: row-resize; }
 .clip::after { right: 0; }
 .clip.is-sel { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 .clip.is-missing { border-color: var(--danger); background: var(--danger-soft); }
-.clip-thumb { height: 100%; aspect-ratio: 1; object-fit: cover; flex: 0 0 auto; pointer-events: none; }
-.clip-wave { position: absolute; left: 0; top: 50%; transform: translateY(-50%); pointer-events: none; opacity: .7; }
+.clip-cv { position: absolute; top: 0; pointer-events: none; }
+/* A sound clip is see-through: the wave of one under it shows (phase 6, the owner's P3); the one dragged is on top. */
+.clip.is-audio { background: color-mix(in srgb, var(--field) 40%, transparent); }
+.clip.is-video, .clip.is-image { background: #000; }
+.clip.is-drag { opacity: .92; }
 .clip-name { position: relative; padding: 0 5px; font-size: 11px; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 .clip.is-audio .clip-name { text-shadow: 0 0 3px var(--field), 0 0 3px var(--field); }
 

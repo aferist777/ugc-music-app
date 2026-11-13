@@ -75,7 +75,10 @@
 
     <section class="timeline" id="timeline" aria-label="Timeline">
       <div class="tl-side">
-        <button class="btn s" id="tl-format" title="The frame's shape">9:16</button>
+        <div class="tl-side-row">
+          <button class="btn s" id="tl-format" title="The frame's shape">9:16</button>
+          <button class="btn s" id="tl-quality" title="How the preview plays">720p</button>
+        </div>
         <div class="tl-preview" id="tl-preview" title="Double press - large"></div>
       </div>
       <div class="tl-main">
@@ -84,23 +87,23 @@
           <span class="tl-time" id="tl-time">0:00.0 / 0:00.0</span>
           <span class="tl-name-p" id="tl-name"></span>
           <span class="tl-spacer"></span>
-          <span class="hint">S split · Delete · Ctrl+Z · Alt+wheel zoom</span>
+          <span class="hint">S split · Ctrl+C / X / V · Delete · Ctrl+Z · Alt+wheel zoom</span>
           <button class="btn s" id="tl-render" title="The video and the music into one MP4 in Video / Renders">Render</button>
         </div>
         <div class="tl-body" id="tl-body">
           <div class="tl-names">
             <div class="tl-name tl-name-ruler"></div>
-            <div class="tl-name">Video 2</div>
-            <div class="tl-name">Video 1</div>
-            <div class="tl-name">Audio 1</div>
-            <div class="tl-name">Audio 2</div>
+            <div class="tl-name is-video">Video 2</div>
+            <div class="tl-name is-video">Video 1</div>
+            <div class="tl-name is-audio">Audio 1</div>
+            <div class="tl-name is-audio">Audio 2</div>
           </div>
           <div class="tl-lanes" id="tl-lanes">
             <div class="tl-ruler" id="tl-ruler"></div>
-            <div class="tl-lane" data-lane="v2"></div>
-            <div class="tl-lane" data-lane="v1"></div>
-            <div class="tl-lane" data-lane="a1"></div>
-            <div class="tl-lane" data-lane="a2"></div>
+            <div class="tl-lane is-video" data-lane="v2"></div>
+            <div class="tl-lane is-video" data-lane="v1"></div>
+            <div class="tl-lane is-audio" data-lane="a1"></div>
+            <div class="tl-lane is-audio" data-lane="a2"></div>
             <div class="tl-playhead" id="tl-playhead"></div>
           </div>
         </div>

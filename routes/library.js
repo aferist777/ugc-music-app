@@ -28,9 +28,32 @@ router.get('/library/peaks', a(async (req, res) => {
 }));
 
 router.get('/library/thumb', a(async (req, res) => {
-  const file = await INFO.thumb(LIB.fileAbs(q(req, 'root'), q(req, 'rel')));
+  const file = await INFO.thumb(LIB.fileAbs(q(req, 'root'), q(req, 'rel')), q(req, 'size') || 's96');
   res.set('Cache-Control', 'private, max-age=3600');
   res.sendFile(file);
+}));
+
+// The timeline's frames of a clip (phase 6): what the strip is, then the strip itself.
+router.get('/library/strip', a(async (req, res) => {
+  res.json(await INFO.strip(LIB.fileAbs(q(req, 'root'), q(req, 'rel'))));
+}));
+
+router.get('/library/strip-img', a(async (req, res) => {
+  const file = await INFO.stripFile(LIB.fileAbs(q(req, 'root'), q(req, 'rel')));
+  res.set('Cache-Control', 'private, max-age=3600');
+  res.sendFile(file);
+}));
+
+// The preview's light copy of a clip (phase 6, the owner's P6): answered once it is made - the page asks one at a time.
+router.get('/library/proxy', a(async (req, res) => {
+  const r = await INFO.proxy(LIB.fileAbs(q(req, 'root'), q(req, 'rel')), q(req, 'q'));
+  res.json(r.same ? { same: true } : { url: '/api/library/proxy-file?' + new URLSearchParams({ root: q(req, 'root'), rel: q(req, 'rel'), q: q(req, 'q') }) });
+}));
+
+router.get('/library/proxy-file', a(async (req, res) => {
+  const r = await INFO.proxy(LIB.fileAbs(q(req, 'root'), q(req, 'rel')), q(req, 'q'));
+  if (r.same) { res.status(404).json({ error: 'no copy - the file is light enough' }); return; }
+  res.sendFile(r.file);
 }));
 
 router.get('/library/desc', (req, res) => res.json({ text: LIB.description(q(req, 'root'), q(req, 'rel')) }));

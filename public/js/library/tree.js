@@ -3,6 +3,8 @@
 // folder (its files below), the caret or a double press folds it, the right button has its menu; a folder is dragged
 // onto another of its root, picked files are dragged onto a folder of theirs, pictures from Explorer are dropped on any
 // folder (a folder of Images keeps them, anywhere else Images / Uploads - phase 5). Which folders are unfolded is remembered.
+// ONE ROOT IS UNFOLDED AT A TIME (phase 6, the owner): Projects, Music, Images, Video, Archive - one unfolded folds the
+// others (the folders inside each keep their own state); a press on a root shows its files and unfolds it.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { remembered, remember } from '../api.js';
@@ -15,8 +17,18 @@ const key = (root, rel) => root + ':' + rel;
 
 export function initTree(L) {
   const host = $('lib-tree');
-  const unfolded = new Set(remembered().unfolded || [key('projects', ''), key('music', '')]);
+  const unfolded = new Set(remembered().unfolded || [key('projects', '')]);
   let hoverTimer = null;
+  // A root's key is "<root>:" - no folder name holds a colon on Windows.
+  const isRootKey = (k) => k.endsWith(':');
+  /** `root` the only unfolded root; the others fold. */
+  const onlyRoot = (root) => {
+    unfolded.add(key(root, ''));
+    for (const k of [...unfolded]) if (isRootKey(k) && k !== key(root, '')) unfolded.delete(k);
+  };
+  // Kept from before phase 6 with several roots unfolded: the first stays.
+  const firstRoot = [...unfolded].find(isRootKey);
+  if (firstRoot) onlyRoot(firstRoot.slice(0, -1));
 
   const keep = () => remember({ unfolded: [...unfolded] });
 
@@ -50,7 +62,10 @@ export function initTree(L) {
     }
 
     caret.addEventListener('click', (e) => { e.stopPropagation(); _fold(root, rel); });
-    row.addEventListener('click', () => L.open(root, rel).catch(e => showError(e.message)));
+    row.addEventListener('click', () => {
+      if (!rel && !unfolded.has(key(root, ''))) { onlyRoot(root); keep(); paint(); }
+      L.open(root, rel).catch(e => showError(e.message));
+    });
     row.addEventListener('dblclick', () => { if (folders.length) _fold(root, rel); });
     row.addEventListener('contextmenu', (e) => { e.preventDefault(); _menu(e, root, rel); });
 
@@ -137,7 +152,7 @@ export function initTree(L) {
   async function newProject() {
     try {
       const r = await post('/api/projects', { name: 'Untitled' });
-      unfolded.add(key('projects', ''));
+      onlyRoot('projects');
       keep();
       await L.loadProjects();
       window.dispatchEvent(new CustomEvent('ms:project-open', { detail: { id: r.project.id } }));
@@ -194,7 +209,8 @@ export function initTree(L) {
 
   function _fold(root, rel, openOnly) {
     const k = key(root, rel);
-    if (unfolded.has(k) && !openOnly) unfolded.delete(k); else unfolded.add(k);
+    if (unfolded.has(k) && !openOnly) unfolded.delete(k);
+    else { unfolded.add(k); onlyRoot(root); }
     keep();
     paint();
   }
@@ -230,7 +246,7 @@ export function initTree(L) {
         if (r) {
           L.player.follow(root, d.rel, r.rel);
           _carryUnfolded(root, d.rel, r.rel);
-          unfolded.add(key(root, rel));
+          if (rel) unfolded.add(key(root, rel)); else onlyRoot(root);
           keep();
           await L.loadTree();
           const inside = L.S.root === root && (L.S.rel === d.rel || L.S.rel.startsWith(d.rel + '/'));
@@ -252,16 +268,19 @@ export function initTree(L) {
     keep();
   }
 
-  /** The open folder shows as picked; the folders above it unfold. */
-  function mark() {
+  /**
+   * The open folder shows as picked. `reveal` (another folder was opened): the folders above it unfold and its root
+   * becomes the one unfolded root - so a press on a fold's caret is never undone by the next paint.
+   */
+  function mark({ reveal = false } = {}) {
     const { root, rel } = L.S;
-    let changed = false;
-    const parts = rel ? rel.split('/') : [];
-    for (let i = 0; i < parts.length; i++) {
-      const k = key(root, parts.slice(0, i).join('/'));
-      if (!unfolded.has(k)) { unfolded.add(k); changed = true; }
+    if (reveal && root) {
+      const was = [...unfolded].sort().join('|');
+      const parts = rel ? rel.split('/') : [];
+      for (let i = 0; i < parts.length; i++) unfolded.add(key(root, parts.slice(0, i).join('/')));
+      if (parts.length) onlyRoot(root);
+      if ([...unfolded].sort().join('|') !== was) { keep(); paint(); return; }
     }
-    if (changed) { keep(); paint(); return; }
     for (const r of host.querySelectorAll('.tn-row')) {
       r.classList.toggle('is-on', r.dataset.root === root && r.dataset.rel === rel);
     }
@@ -352,7 +371,7 @@ export function initTree(L) {
   async function newFolder(root, parent) {
     try {
       const r = await post('/api/library/folder', { root, parent, name: _freeName(root, parent) });
-      unfolded.add(key(root, parent));
+      if (parent) unfolded.add(key(root, parent)); else onlyRoot(root);
       keep();
       await L.loadTree();
       rename(root, r.rel, { opening: true });

@@ -3,10 +3,14 @@
 // over Video 1) and two sound lanes (T2). Clips come from the library's rows and from Recent of the Music tab by a drag:
 // music onto a sound lane, clips and pictures onto a video lane (a picture lasts 5 s - T3). A clip is moved (along its
 // lane and onto the other lane of its kind), trimmed by its edges, split at the playhead (S), deleted (Delete); several
-// are picked with Ctrl / Shift or a band; everything snaps to the clips' edges and the playhead; Ctrl+Z / Ctrl+Y; Alt +
-// wheel zooms; a press on the ruler moves the playhead. Space plays it when the timeline was used last. The frame's
+// are picked with Ctrl / Shift or a band; everything snaps to the clips' edges and the playhead; Ctrl+Z / Ctrl+Y; Ctrl+C /
+// Ctrl+X / Ctrl+V (phase 6: pasted at the playhead - after the clip it stands on -, the playhead then at their end); Alt +
+// wheel zooms around the playhead; a press on the ruler moves the playhead. Space plays it when the timeline was used last. The frame's
 // shape is the button over the preview - it says the OTHER shape (T4). The project is saved by itself after every
-// change; one the library changed meanwhile (a file renamed, moved, archived) is read again.
+// change; one the library changed meanwhile (a file renamed, moved, archived) is read again. Phase 6: the lanes fill the
+// timeline's height (sound lanes half as tall again as video ones); a clip or a picture is a row of square frames (no
+// name - it is in the hint); a sound clip is see-through - the one dragged goes on top and its wave, where it lies over
+// another, is drawn in the second colour, the fades' curves over both.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { api, remembered, remember } from '../api.js';
@@ -16,12 +20,14 @@ import { openMenu } from '../menu.js';
 import { spaceOwner, setSpaceOwner } from '../space.js';
 import { q, clock } from '../library/common.js';
 import * as JOBS from '../music/jobs-store.js';
-import { createPreview } from './preview.js';
+import { createPreview, QUALITIES } from './preview.js';
+import { fadesOf, gainAt } from './fades.js';
 
 const $ = (id) => document.getElementById(id);
 const LANES = [['v2', 'Video 2', 'video'], ['v1', 'Video 1', 'video'], ['a1', 'Audio 1', 'audio'], ['a2', 'Audio 2', 'audio']];
 const KIND_OF_ROOT = { music: 'audio', video: 'video', images: 'image' };
 const IMAGE_SEC = 5;
+const TILE = 4000;      // a canvas at most this wide (css px) - a much wider one draws nothing
 const SNAP_PX = 8;
 const EDGE_PX = 6;
 const MIN_DUR = 0.1;
@@ -33,7 +39,12 @@ const S = {
   t: 0,
   undo: [],
   redo: [],
+  dragIds: null,    // the clips being dragged - drawn on top
 };
+// Ctrl+C / Ctrl+X: the window's own buffer, kept while it is open - pasted into this project or another.
+let clipboard = null;
+const strips = new Map(); // root + rel -> { meta, img } | 'asking' | 'none'
+let seen = null;          // a clip's frames are asked for once it comes into sight
 let preview = null;
 let saveTimer = 0;
 let saving = null;
@@ -180,39 +191,61 @@ function paintLanes() {
   const lanesEl = $('tl-lanes');
   lanesEl.style.width = width + 'px';
   paintRuler(width);
+  if (seen) seen.disconnect();
+  const fades = fadesOf(S.p);
   for (const [lane] of LANES) {
     const host = lanesEl.querySelector('[data-lane="' + lane + '"]');
     host.textContent = '';
-    for (const c of (S.p && S.p.lanes[lane]) || []) host.append(_clipEl(c));
+    // The clip's inside: the lane less its 2 px above and below and its border.
+    const h = Math.max(6, host.clientHeight - 7);
+    for (const c of (S.p && S.p.lanes[lane]) || []) host.append(_clipEl(c, lane, h, fades));
   }
   paintTime();
 }
 
-function _clipEl(c) {
-  const d = el('div', 'clip is-' + c.kind + (S.sel.has(c.id) ? ' is-sel' : '') + (c.missing ? ' is-missing' : ''));
+function _clipEl(c, lane, h, fades) {
+  const d = el('div', 'clip is-' + c.kind + (S.sel.has(c.id) ? ' is-sel' : '') + (c.missing ? ' is-missing' : '')
+    + (S.dragIds && S.dragIds.has(c.id) ? ' is-drag' : ''));
   d.dataset.id = c.id;
   d.style.left = c.start * S.pps + 'px';
-  d.style.width = Math.max(2, c.dur * S.pps) + 'px';
+  const w = Math.max(2, c.dur * S.pps);
+  d.style.width = w + 'px';
   const name = c.rel.split('/').pop();
   d.title = name + (c.missing ? ' - its file is gone' : '');
   if (c.kind === 'audio') {
-    const cv = el('canvas', 'clip-wave');
-    d.append(cv);
-    _wave(cv, c);
+    _paintWave(d, c, lane, w, h, fades.get(String(c.id)));
+    d.append(el('span', 'clip-name', name.replace(/\.[^.]+$/, '')));
   } else if (!c.missing) {
-    const im = el('img', 'clip-thumb');
-    im.alt = '';
-    im.loading = 'lazy';
-    im.src = '/api/library/thumb?' + q({ root: c.root, rel: c.rel });
-    im.addEventListener('error', () => im.remove());
-    d.append(im);
+    _paintFrames(d, c, w, h);
   }
-  d.append(el('span', 'clip-name', name.replace(/\.[^.]+$/, '')));
   return d;
 }
 
-// A sound clip draws its part of its file's wave (the 400 points the player uses).
-function _wave(cv, c) {
+// Canvases side by side over a clip's width (one canvas of a long clip zoomed in would be too wide to draw), each
+// handed the clip's own x: draw(g, x0, x1).
+function _tiles(d, w, h, draw) {
+  const dpr = window.devicePixelRatio || 1;
+  for (let x0 = 0; x0 < w; x0 += TILE) {
+    const tw = Math.min(TILE, w - x0);
+    const cv = el('canvas', 'clip-cv');
+    cv.width = Math.max(1, Math.ceil(tw * dpr));
+    cv.height = Math.max(1, Math.ceil(h * dpr));
+    cv.style.left = x0 + 'px';
+    cv.style.width = tw + 'px';
+    cv.style.height = h + 'px';
+    const g = cv.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, -x0 * dpr, 0);
+    draw(g, x0, x0 + tw);
+    d.append(cv);
+  }
+}
+
+const _css = (name, or) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || or;
+
+// A sound clip draws its part of its file's wave (the 400 points the player uses). Where it lies OVER another clip of
+// its lane (it comes later in the lane's order - the one dragged last is on top), or while it is dragged, the wave is
+// in the second colour; the fades' volume curves are drawn over it, what they take away shaded.
+function _paintWave(d, c, lane, w, h, f) {
   const key = c.root + '/' + c.rel;
   const have = peaks.get(key);
   if (!have) {
@@ -224,23 +257,82 @@ function _wave(cv, c) {
     return;
   }
   if (have === 'asking' || !have.peaks || !have.peaks.length) return;
-  const w = Math.max(2, Math.round(c.dur * S.pps));
-  const h = 22;
-  const dpr = window.devicePixelRatio || 1;
-  cv.width = w * dpr;
-  cv.height = h * dpr;
-  cv.style.width = w + 'px';
-  cv.style.height = h + 'px';
-  const g = cv.getContext('2d');
-  g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#888';
+  const list = S.p.lanes[lane];
+  const at = list.findIndex(x => x.id === c.id);
+  const over = list.slice(0, at)
+    .filter(o => o.start < c.start + c.dur && o.start + o.dur > c.start)
+    .map(o => [Math.max(o.start, c.start) - c.start, Math.min(o.start + o.dur, c.start + c.dur) - c.start]);
+  const dragged = !!(S.dragIds && S.dragIds.has(c.id));
+  const low = _css('--wave', '#888');
+  const top = _css('--wave-top', '#5aa0ff');
+  const shade = _css('--fade-shade', 'rgba(0,0,0,.35)');
+  const line = _css('--ink2', '#bbb');
   const total = have.duration || c.fileDur || c.dur;
-  for (let x = 0; x < w; x += 2) {
-    const ft = c.in + (x / S.pps);
-    const i = Math.min(have.peaks.length - 1, Math.floor(ft / total * have.peaks.length));
-    const bh = Math.max(1, (have.peaks[i] || 0) / 100 * h);
-    g.fillRect(x, (h - bh) / 2, 1, bh);
-  }
+  _tiles(d, w, h, (g, x0, x1) => {
+    for (let x = x0 - (x0 % 2); x < x1; x += 2) {
+      const sec = x / S.pps;
+      const ft = c.in + sec;
+      const i = Math.min(have.peaks.length - 1, Math.floor(ft / total * have.peaks.length));
+      const bh = Math.max(1, (have.peaks[i] || 0) / 100 * h);
+      g.fillStyle = dragged || over.some(([a, b]) => sec >= a && sec < b) ? top : low;
+      g.fillRect(x, (h - bh) / 2, 1, bh);
+    }
+    if (!f || (f.in < 0.01 && f.out < 0.01)) return;
+    const spans = [];
+    if (f.in >= 0.01) spans.push([0, f.in * S.pps]);
+    if (f.out >= 0.01) spans.push([w - f.out * S.pps, w]);
+    for (const [a0, b0] of spans) {
+      const a = Math.max(a0, x0);
+      const b = Math.min(b0, x1);
+      if (b <= a) continue;
+      const ys = [];
+      for (let x = a; x <= b; x += 1) ys.push([x, h - gainAt(c, f, c.start + x / S.pps) * h]);
+      g.beginPath();
+      g.moveTo(a, 0);
+      for (const [x, y] of ys) g.lineTo(x, y);
+      g.lineTo(b, 0);
+      g.closePath();
+      g.fillStyle = shade;
+      g.fill();
+      g.beginPath();
+      ys.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y)));
+      g.strokeStyle = line;
+      g.lineWidth = 1;
+      g.stroke();
+    }
+  });
+}
+
+// A clip or a picture: square frames side by side over its whole length, each the frame of its own moment in the
+// file (a picture - itself in every square). The frames are one strip the server makes once (lib/media-info.js
+// `strip`), asked for only once the clip comes into sight.
+function _paintFrames(d, c, w, h) {
+  const key = c.root + '/' + c.rel;
+  const have = strips.get(key);
+  if (!have) { d.dataset.strip = key; if (seen) seen.observe(d); return; }
+  if (have === 'asking' || have === 'none') return;
+  const { n, step, size } = have.meta;
+  _tiles(d, w, h, (g, x0, x1) => {
+    for (let x = Math.floor(x0 / h) * h; x < x1; x += h) {
+      const ft = c.kind === 'image' || !step ? 0 : c.in + (x + h / 2) / S.pps;
+      const i = step ? Math.max(0, Math.min(n - 1, Math.round(ft / step))) : 0;
+      g.drawImage(have.img, i * size, 0, size, size, x, 0, Math.max(1, h - 1), h);
+    }
+  });
+}
+
+function _askStrip(key) {
+  if (strips.has(key)) return;
+  strips.set(key, 'asking');
+  const cut = key.indexOf('/');
+  const root = key.slice(0, cut);
+  const rel = key.slice(cut + 1);
+  api('/api/library/strip?' + q({ root, rel })).then((meta) => {
+    const img = new Image();
+    img.onload = () => { strips.set(key, { meta, img }); paintLanes(); };
+    img.onerror = () => strips.set(key, 'none');
+    img.src = '/api/library/strip-img?' + q({ root, rel });
+  }).catch(() => strips.set(key, 'none'));
 }
 
 // ── Snapping ────────────────────────────────────────────────────────────────
@@ -275,6 +367,13 @@ function _laneAt(y) {
   return null;
 }
 
+/** The lanes scrolled so the playhead stands in their middle (at the film's start they begin at 0). */
+function centerPlayhead() {
+  const body = $('tl-body');
+  const view = body.clientWidth - body.querySelector('.tl-names').offsetWidth;
+  body.scrollLeft = Math.max(0, S.t * S.pps - view / 2);
+}
+
 const _tAt = (x) => Math.max(0, (x - $('tl-lanes').getBoundingClientRect().left) / S.pps);
 
 function _onClipDown(e, d) {
@@ -288,11 +387,21 @@ function _onClipDown(e, d) {
   const x0 = e.clientX;
   let started = false;
   const move = (ev) => {
+    // The button let go where the window did not hear it (outside it): the drag ends where it was.
+    if (ev.buttons === 0) { up(); return; }
     const dx = (ev.clientX - x0) / S.pps;
     if (!started) {
       if (Math.abs(ev.clientX - x0) < 3 && _laneAt(ev.clientY) === orig.get(id).lane) return;
       started = true;
       begin();
+      // A sound clip dragged goes on top of its lane (last in its order) - drawn over the others, its wave in the
+      // second colour where it lies over one (phase 6, the owner's P3).
+      for (const cid of orig.keys()) {
+        const c = clipOf(cid);
+        const l = laneOf(cid);
+        if (c && c.kind === 'audio') S.p.lanes[l] = S.p.lanes[l].filter(x => x.id !== cid).concat([c]);
+      }
+      S.dragIds = new Set(orig.keys());
     }
     if (edge) {
       const o = orig.get(id);
@@ -337,6 +446,7 @@ function _onClipDown(e, d) {
   const up = () => {
     window.removeEventListener('pointermove', move);
     window.removeEventListener('pointerup', up);
+    S.dragIds = null;
     if (started) commit(); else paintLanes();
   };
   window.addEventListener('pointermove', move);
@@ -435,6 +545,52 @@ function split() {
   commit();
 }
 
+/** The picked clips into the window's buffer, with their lanes and their places to one another. */
+function copyPicked() {
+  const picked = [...S.sel].map(id => ({ lane: laneOf(id), clip: clipOf(id) })).filter(x => x.lane && x.clip);
+  if (!picked.length) return false;
+  const t0 = Math.min(...picked.map(x => x.clip.start));
+  clipboard = picked.map(({ lane, clip }) => ({ lane, clip: Object.assign({}, clip, { start: clip.start - t0 }) }));
+  showToast(picked.length === 1 ? 'Clip copied' : picked.length + ' clips copied');
+  return true;
+}
+
+/**
+ * The buffer laid on its own lanes STARTING AT THE PLAYHEAD - or, when the playhead stands on a clip of one of those
+ * lanes, right after that clip (and after any clip that goes on from there) - the owner's answer to item 1. The pasted
+ * clips are picked and the playhead goes to their end, so Ctrl+V again lays the next copy after them. One Ctrl+Z step.
+ */
+function paste() {
+  if (!clipboard || !clipboard.length || !S.p) return;
+  const lanes = [...new Set(clipboard.map(x => x.lane))];
+  const span = Math.max(...clipboard.map(x => x.clip.start + x.clip.dur));
+  let at = S.t;
+  for (let guard = 0; guard < 1000; guard++) {
+    const under = lanes.flatMap(l => S.p.lanes[l]).filter(c => at >= c.start - 1e-6 && at < c.start + c.dur - 1e-6);
+    if (!under.length) break;
+    at = Math.max(...under.map(c => c.start + c.dur));
+  }
+  begin();
+  const ids = [];
+  for (const { lane, clip } of clipboard) {
+    const c = Object.assign({}, clip, { id: newId(), start: at + clip.start });
+    S.p.lanes[lane].push(c);
+    ids.push(c.id);
+  }
+  S.sel = new Set(ids);
+  S.t = at + span;
+  commit();
+  _keepInView();
+}
+
+/** The lanes scrolled, when they must, so the playhead is in sight. */
+function _keepInView() {
+  const body = $('tl-body');
+  const names = body.querySelector('.tl-names').offsetWidth;
+  const x = S.t * S.pps;
+  if (x < body.scrollLeft || x > body.scrollLeft + body.clientWidth - names - 20) centerPlayhead();
+}
+
 function removePicked() {
   if (!S.sel.size) return;
   begin();
@@ -465,6 +621,13 @@ async function render() {
 // ── Start ───────────────────────────────────────────────────────────────────
 
 export async function initTimeline() {
+  seen = new IntersectionObserver((list) => {
+    for (const e of list) {
+      if (!e.isIntersecting || !e.target.dataset.strip) continue;
+      seen.unobserve(e.target);
+      _askStrip(e.target.dataset.strip);
+    }
+  }, { root: $('tl-body'), rootMargin: '0px 600px' });
   preview = createPreview($('tl-preview'), {
     project: () => S.p,
     onTime: (t) => {
@@ -478,6 +641,19 @@ export async function initTimeline() {
     },
     onEnd: (t) => { S.t = t; paintTime(); },
   });
+  // The preview's quality (phase 6, the owner's P6) - beside the frame's shape: 360p, 720p, Full in turn.
+  const qBtn = $('tl-quality');
+  const paintQuality = () => {
+    qBtn.textContent = preview.quality();
+    qBtn.title = 'The preview plays ' + (preview.quality() === 'Full' ? 'the files themselves' : 'light ' + preview.quality()
+      + ' copies, made once in the background') + ' - press for ' + QUALITIES[(QUALITIES.indexOf(preview.quality()) + 1) % QUALITIES.length]
+      + '. The render always takes the files themselves.';
+  };
+  qBtn.addEventListener('click', () => {
+    preview.setQuality(QUALITIES[(QUALITIES.indexOf(preview.quality()) + 1) % QUALITIES.length]);
+    paintQuality();
+  });
+  paintQuality();
   $('tl-play').addEventListener('click', togglePlay);
   $('tl-render').addEventListener('click', render);
   $('tl-format').addEventListener('click', () => {
@@ -493,16 +669,14 @@ export async function initTimeline() {
     const d = e.target.closest('.clip');
     if (d) _onClipDown(e, d); else _onEmptyDown(e);
   });
+  // Alt + wheel zooms AROUND THE PLAYHEAD, which then stands in the middle of the lanes (phase 6, the owner).
   $('tl-body').addEventListener('wheel', (e) => {
     if (!e.altKey) return;
     e.preventDefault();
-    const body = $('tl-body');
-    const tAt = _tAt(e.clientX);
-    const before = e.clientX - body.getBoundingClientRect().left;
     S.pps = Math.max(2, Math.min(400, S.pps * (e.deltaY < 0 ? 1.25 : 0.8)));
     remember({ tlPps: S.pps });
     paintLanes();
-    body.scrollLeft = Math.max(0, tAt * S.pps - before + body.querySelector('.tl-names').offsetWidth);
+    centerPlayhead();
   }, { passive: false });
 
   // A picture's right button: Animate - the picture becomes the Animate tab's start frame (phase 5, the owner's i8).
@@ -545,6 +719,12 @@ export async function initTimeline() {
   document.addEventListener('keydown', (e) => {
     if (blocked(e) || spaceOwner() !== 'timeline' || !S.p) return;
     const k = e.key.toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (k === 'c' || k === 'x' || k === 'v')) {
+      e.preventDefault();
+      if (k === 'v') paste();
+      else if (copyPicked() && k === 'x') removePicked();
+      return;
+    }
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); } else if (k === 's' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); split(); } else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); removePicked(); } else if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); undo(e.shiftKey); } else if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); undo(true); } else if ((e.ctrlKey || e.metaKey) && k === 'a') {
       e.preventDefault();
       S.sel = new Set(allClips().map(c => c.id));
