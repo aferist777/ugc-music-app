@@ -5,14 +5,18 @@
 // (data/window.json). F11 full screen, Ctrl+Shift+I DevTools, Ctrl+R / F5 reload. The server runs inside this process on
 // 127.0.0.1:38517 (the next free port if that is taken), on the owner's library beside the program - library/ - unless
 // MUSIC_LIBRARY_DIR names another (a test). Chromium's profile lives in the library too, so one library is one copy of
-// the app. MUSIC_NO_FOCUS=1 shows the window without taking the focus (tests).
+// the app. MUSIC_NO_FOCUS=1 shows the window without taking the focus (tests). The BUILT app (phase 8, tools/build-exe.js:
+// "UGC Music Studio\UGC Music Studio.exe" starts "app\UGC Music Studio.exe", which runs app\resources\app) keeps its
+// library in "UGC Music Studio\library" - beside the exe the person starts, never inside the program.
 
 const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow, Menu, shell, screen, dialog } = require('electron');
 
 const APP_DIR = path.resolve(__dirname, '..');
-if (!process.env.MUSIC_LIBRARY_DIR) process.env.MUSIC_LIBRARY_DIR = path.join(APP_DIR, 'library');
+if (!process.env.MUSIC_LIBRARY_DIR) {
+  process.env.MUSIC_LIBRARY_DIR = app.isPackaged ? path.join(path.dirname(process.execPath), '..', 'library') : path.join(APP_DIR, 'library');
+}
 const LIBRARY_DIR = path.resolve(process.env.MUSIC_LIBRARY_DIR);
 const WINDOW_FILE = path.join(LIBRARY_DIR, 'data', 'window.json');
 
@@ -135,6 +139,7 @@ async function boot() {
     minHeight: MIN.height,
     show: false,
     title: TITLE,
+    icon: path.join(APP_DIR, 'desktop', 'icon.ico'),
     backgroundColor: BG,
     autoHideMenuBar: true,
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, spellcheck: false },

@@ -61,7 +61,18 @@ function paintWindow() {
   const go = $('update-go');
   const job = S && S.job;
   msg.classList.toggle('is-error', !!(job && job.error));
-  if (job && job.error) { msg.textContent = 'The update did not go: ' + job.error; go.textContent = 'Try again'; go.disabled = false; } else if (job && job.done) { msg.textContent = 'Version ' + job.version + ' is in place. A copy of your data is in library / backups.'; go.textContent = 'Restart now'; go.disabled = false; } else if (job) { msg.textContent = job.stage + '…'; go.textContent = 'Updating…'; go.disabled = true; } else { msg.textContent = 'Your library is not touched; a copy of the app\'s data is kept first.'; go.textContent = 'Update now'; go.disabled = !list.length; }
+  if (job && job.error) {
+    msg.textContent = 'The update did not go: ' + job.error;
+    if (job.full) {
+      const a = el('a', 'update-full', 'Open the download page');
+      a.href = job.full;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      msg.append(' ', a);
+    }
+    go.textContent = 'Try again';
+    go.disabled = false;
+  } else if (job && job.done) { msg.textContent = 'Version ' + job.version + ' is in place. A copy of your data is in library / backups.'; go.textContent = 'Restart now'; go.disabled = false; } else if (job) { msg.textContent = job.stage + '…'; go.textContent = 'Updating…'; go.disabled = true; } else { msg.textContent = 'Your library is not touched; a copy of the app\'s data is kept first.'; go.textContent = 'Update now'; go.disabled = !list.length; }
 }
 
 async function read() {

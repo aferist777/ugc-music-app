@@ -83,6 +83,8 @@ select.field { padding: 0 4px; }
 /* ── Top strip ─────────────────────────────────────────── */
 .top { height: var(--top-h); display: flex; align-items: center; gap: 4px; padding: 0 6px 0 10px; border-bottom: 1px solid var(--line); background: var(--bar); }
 .brand { font-weight: 600; }
+/* Donate (the owner, 2026-11-13): right of the name; its title thanks and asks for ideas for the next updates. */
+.donate { height: 22px; padding: 0 7px; margin-left: 6px; gap: 5px; font-size: 11px; text-decoration: none; }
 .top-sp { flex: 1; }
 .fake-chip { padding: 0 6px; border: 1px solid var(--line2); border-radius: 2px; color: var(--muted); font-size: 11px; margin-right: 4px; }
 .keys-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); }
