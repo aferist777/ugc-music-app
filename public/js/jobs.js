@@ -16,7 +16,7 @@ let pop = null;
 
 function _when(t) {
   const d = new Date(t);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
 
 function _secs(j) {

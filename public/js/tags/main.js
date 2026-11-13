@@ -43,9 +43,9 @@ let tickTimer = 0;
 function _when(t) {
   const d = new Date(t);
   const now = new Date();
-  const hm = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const hm = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   if (d.toDateString() === now.toDateString()) return hm;
-  return d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ' ' + hm;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' ' + hm;
 }
 
 async function loadChats() {

@@ -59,6 +59,16 @@ On the first start the app makes its library - the folder `library/` inside the 
 and `Video` in it. Everything the app writes goes there and nowhere else. To keep the library somewhere else, set
 `MUSIC_LIBRARY_DIR` to a folder before starting.
 
+## Updates
+
+When a newer version is released, an **Update** chip appears at the top of the window. Press it to read what changed,
+then **Update now**: the app keeps a copy of its own data in `library/backups`, puts the new version in place (a git
+clone moves forward with git; a downloaded ZIP gets the new files) and restarts. Your library is never touched, and
+nothing is forced - the chip simply waits until you press it. The app asks GitHub for new releases a minute after it
+starts and every six hours.
+
+Version 0.1.0 has no updater yet: update it once by hand (`git pull` in its folder, or download it again).
+
 ## API keys
 
 Open **API keys** at the top right and paste your keys. They are kept only in `library/data/settings.json` on your

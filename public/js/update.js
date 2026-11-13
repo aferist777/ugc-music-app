@@ -27,7 +27,7 @@ function el(tag, cls, text) {
 function _day(iso) {
   if (!iso) return '';
   const d = new Date(iso);
-  return isNaN(d) ? '' : d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+  return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function paintChip() {
