@@ -82,7 +82,7 @@ async function _save(patch, done) {
     _dot();
     _paint();
     _msg(done || 'Saved.');
-    // The tabs read again what they offer - the enhancers live by the Anthropic key.
+    // The tabs read again what they offer - the enhancers live by a kie.ai or an Anthropic key.
     window.dispatchEvent(new CustomEvent('ms:keys'));
     // The rows were drawn anew: the focus stays in the window rather than falling to the page under it.
     const first = $('keys-form').querySelector('input');

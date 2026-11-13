@@ -4,15 +4,20 @@
 // sources (folded, V7) and their tags in three groups; a press on a tag puts it into the Mix (again - takes it out), the
 // Mix is one for the whole tab and kept on the server; "+ tag" adds one's own (V4). While an answer is being made the
 // chat shows what the assistant is doing and for how long (V6) - the page only follows the server (lib/tags-store.js).
+// Phase 7: PICTURES - up to 4 dropped on the tab (from the library's rows, the Images / Animate chats or this computer -
+// those into Images / Uploads first) or pasted into the field; shown over the field with ✕, sent with the message (or
+// alone): the assistant reads their vibe. A refused answer (music only) shows its words and no tags.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { api, remembered, remember } from '../api.js';
 import { openMenu } from '../menu.js';
 import { showError } from '../notice.js';
 import { renderMarkdown } from './markdown.js';
+import { bringIn, hasFiles, draggedPictures, thumbOf } from '../visual/common.js';
 
 const $ = (id) => document.getElementById(id);
 const GROUPS = [['genre', 'Genre'], ['mood', 'Mood'], ['sound', 'Sound']];
+const MAX_PICS = 4;
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -27,6 +32,7 @@ const S = {
   chat: null,
   pending: null,
   mix: [],
+  pics: [],        // pictures waiting to go with the next message: [{ root: 'images', rel }]
 };
 
 let pollTimer = 0;
@@ -167,6 +173,14 @@ function _answer(m) {
     if (m.tried && m.tried.length) box.append(el('div', 'tg-tried', m.tried.join(' · ')));
     return box;
   }
+  if (m.refused) {
+    box.classList.add('is-refused');
+    box.append(el('div', 'tg-by', (m.by && m.by.label) || 'Assistant'));
+    const body = el('div', 'tg-text');
+    body.innerHTML = renderMarkdown(m.text || '');
+    box.append(body);
+    return box;
+  }
   const by = m.by || {};
   const head = [by.label || 'Assistant'];
   if (by.searches) head.push(by.searches + (by.searches === 1 ? ' search' : ' searches'));
@@ -234,12 +248,26 @@ function paintThread(scroll) {
   if (!msgs.length && !S.pending) {
     const hint = el('div', 'tg-empty');
     hint.append(el('h2', null, 'Tag assistant'));
-    hint.append(el('p', null, 'Describe the music you want - a mood, a scene, a use, a reference. The assistant searches the web if it needs to and answers with genre, mood and sound tags to mix.'));
+    hint.append(el('p', null, 'Describe the music you want - a mood, a scene, a use, a reference - or drop a picture: the assistant reads its vibe. It answers with genre, mood and sound tags to mix. Music only.'));
     host.append(hint);
   }
   msgs.forEach((m, i) => {
     if (m.role === 'user') {
-      host.append(el('div', 'tg-msg is-you', m.text));
+      const you = el('div', 'tg-msg is-you');
+      if (m.pics && m.pics.length) {
+        const row = el('div', 'tg-you-pics');
+        for (const p of m.pics) {
+          const im = el('img');
+          im.src = thumbOf(p);
+          im.alt = '';
+          im.title = p.rel.split('/').join(' / ');
+          im.addEventListener('error', () => { im.replaceWith(el('span', 'tg-pic-gone', 'gone')); });
+          row.append(im);
+        }
+        you.append(row);
+      }
+      if (m.text) you.append(el('div', null, m.text));
+      host.append(you);
       // A question with no answer after it, and nothing waiting: the app was closed while it waited.
       const next = msgs[i + 1];
       if (!next && !S.pending) host.append(el('div', 'tg-msg is-agent is-error', 'No answer - the app was closed while it waited. Send it again.'));
@@ -289,11 +317,13 @@ function _startPolling() {
 async function send() {
   const input = $('tg-input');
   const text = input.value.trim();
-  if (!text || S.pending) return;
+  if ((!text && !S.pics.length) || S.pending) return;
   $('tg-send').disabled = true;
   try {
-    const r = await api('/api/tags/send', { method: 'POST', body: { chat: S.open, text } });
+    const r = await api('/api/tags/send', { method: 'POST', body: { chat: S.open, text, pics: S.pics } });
     input.value = '';
+    S.pics = [];
+    paintPics();
     _grow();
     S.open = r.id;
     remember({ tagsChat: r.id });
@@ -314,6 +344,72 @@ function _grow() {
   t.style.height = 'auto';
   t.style.height = Math.min(t.scrollHeight + 2, 140) + 'px';
   t.style.overflowY = t.scrollHeight > 140 ? 'auto' : 'hidden';
+}
+
+// ── Pictures for the next message ───────────────────────────────────────────
+
+function paintPics() {
+  const host = $('tg-pics');
+  host.textContent = '';
+  host.hidden = !S.pics.length;
+  for (const p of S.pics) {
+    const box = el('div', 'tg-pic');
+    box.title = p.rel.split('/').join(' / ') + ' - the assistant reads its vibe';
+    const im = el('img');
+    im.src = thumbOf(p);
+    im.alt = '';
+    const x = el('button', 'tg-pic-x', '✕');
+    x.type = 'button';
+    x.title = 'Take it off';
+    x.addEventListener('click', () => { S.pics = S.pics.filter(q => q.rel !== p.rel); paintPics(); });
+    box.append(im, x);
+    host.append(box);
+  }
+}
+
+function addPics(list) {
+  let full = false;
+  for (const p of list) {
+    if (S.pics.some(q => q.rel === p.rel)) continue;
+    if (S.pics.length >= MAX_PICS) { full = true; break; }
+    S.pics.push(p);
+  }
+  if (full) showError('At most ' + MAX_PICS + ' pictures in one message.');
+  paintPics();
+  $('tg-input').focus();
+}
+
+// Pictures dropped anywhere on the tab: the library's rows and the chats' pictures as they are, files from this
+// computer brought into Images / Uploads first; pasted into the field - the same.
+function _dropPictures() {
+  const panel = document.querySelector('[data-panel="tags"] .tg-main');
+  const ours = (e) => draggedPictures().length || hasFiles(e);
+  panel.addEventListener('dragover', (e) => {
+    if (!ours(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    panel.classList.add('is-drop');
+  });
+  panel.addEventListener('dragleave', (e) => { if (!panel.contains(e.relatedTarget)) panel.classList.remove('is-drop'); });
+  panel.addEventListener('drop', async (e) => {
+    panel.classList.remove('is-drop');
+    const inPage = draggedPictures();
+    if (!inPage.length && !hasFiles(e)) return;
+    e.preventDefault();
+    window.msDrag = null;
+    addPics(inPage.length ? inPage : await bringIn(e.dataTransfer.files));
+  });
+  $('tg-input').addEventListener('paste', async (e) => {
+    const files = [...((e.clipboardData && e.clipboardData.files) || [])].filter(f => /^image\//.test(f.type));
+    if (!files.length) return;
+    e.preventDefault();
+    // A pasted picture has no name of its own: it is named after the moment (this computer's clock).
+    const d = new Date();
+    const two = (n) => String(n).padStart(2, '0');
+    const stamp = d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate()) + ' ' + two(d.getHours()) + '-' + two(d.getMinutes()) + '-' + two(d.getSeconds());
+    const named = files.map((f, i) => new File([f], 'pasted ' + stamp + (i ? ' ' + (i + 1) : '') + '.' + ((f.type.split('/')[1] || 'png').replace('jpeg', 'jpg')), { type: f.type }));
+    addPics(await bringIn(named));
+  });
 }
 
 // ── The Mix ─────────────────────────────────────────────────────────────────
@@ -345,6 +441,7 @@ function toggleMix(tag, group) {
 
 export async function initTags() {
   $('tg-new').addEventListener('click', newChat);
+  _dropPictures();
   $('tg-ask').addEventListener('submit', (e) => { e.preventDefault(); send(); });
   const input = $('tg-input');
   input.addEventListener('input', _grow);

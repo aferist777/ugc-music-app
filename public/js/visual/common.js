@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 // WHAT THE IMAGES AND ANIMATE TABS SHARE (phase 5): the frame of a tab - the settings column on the left, the ONE chat
 // on the right (the owner's i2) with the Prompt enhancer tick over the field and Generate on its right - the tick grey
-// with no Anthropic key (the owner 2026-11-13: no key - nothing is enhanced, the words go as they are) -, the chat's
+// with no kie.ai or Anthropic key (the owner 2026-11-13: no key - nothing is enhanced, the words go as they are) -, the chat's
 // reading (it follows the journal while a press is being made), a picture or a clip opened large OVER ITS OWN TAB by a
 // press (the owner's i14), dragging a made file onto the timeline, and the person's own pictures brought in from this
 // computer (into Images / Uploads - the owner's i13).
@@ -65,7 +65,7 @@ export function select(options, value, onPick, title) {
 
 /**
  * Builds the tab: { side, thread, input, go, setEnhancer, setLoopAgent, enhancing } - the caller fills `side` and answers
- * the press; `setEnhancer(on)` - is there an enhancer (an Anthropic key); `setLoopAgent(on)` - Loop is on: the tick
+ * the press; `setEnhancer(on)` - is there an enhancer (a kie.ai or an Anthropic key); `setLoopAgent(on)` - Loop is on: the tick
  * says "Loop agent", always on while there is a key (the owner's P9 - the enhancer rests); `enhancing()` - is the
  * press to be enhanced.
  */
@@ -93,7 +93,7 @@ export function frame(panel, { placeholder, enhanceTitle, loopTitle, S, keep, on
     box.checked = present && (looping || S.enhance !== false);
     lab.classList.toggle('is-off', !present);
     lab.classList.toggle('is-fixed', present && looping);
-    lab.title = !present ? 'No Anthropic key - your words go as they are. Add the key in API keys to have them '
+    lab.title = !present ? 'No kie.ai or Anthropic key - your words go as they are. Add a key in API keys to have them '
       + (looping ? 'written for the loop.' : 'enhanced.') : looping ? loopTitle : enhanceTitle;
   };
   const setEnhancer = (on) => { present = !!on; paintTick(); };
@@ -270,7 +270,7 @@ export function pressHead(e) {
   return out;
 }
 
-/** The Keys window saved: what the tab offers is read again (an Anthropic key added or taken away). */
+/** The Keys window saved: what the tab offers is read again (a key added or taken away). */
 export function onKeys(fn) {
   window.addEventListener('ms:keys', fn);
 }

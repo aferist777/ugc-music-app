@@ -4,8 +4,8 @@
 // their right, the START FRAME - set by Animate under a picture of the Images chat or by a picture's right button on
 // the timeline (i8), or dropped on it - and for Kling the LOOP tick (on: the clip ends on its start frame) or,
 // unticked, a last frame dropped on its place; then where the clip goes (the Video folder selected in the library, else
-// its root - i10). On the right the chat of clips, the Prompt enhancer tick (Claude Sonnet 5.5 sees the frame; grey with
-// no Anthropic key - the words go as they are) and the field. Loop on (phase 6, the owner's P9): the tick says "Loop
+// its root - i10). On the right the chat of clips, the Prompt enhancer tick (the agents' ladder sees the frame; grey with
+// no kie.ai or Anthropic key - the words go as they are) and the field. Loop on (phase 6, the owner's P9): the tick says "Loop
 // agent" and works by itself - the second agent writes your words and the loop together; the enhancer rests.
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -176,9 +176,9 @@ export async function initAnimate() {
   panel = document.querySelector('[data-panel="animate"]');
   ui = frame(panel, {
     placeholder: 'How it moves - in your words, any language',
-    enhanceTitle: 'Claude Sonnet 5.5 looks at the frame, adds to your words and sends it at once (about a cent)',
-    loopTitle: 'Loop is on: the loop agent (Claude Sonnet 5.5) looks at the frame, keeps what you asked for and adds everything '
-      + 'the loop needs to come back to its start frame - the people, the rain, the light, the camera. It works by itself (about a cent).',
+    enhanceTitle: 'The enhancer (Kimi K3.1 Pro first, then DeepSeek, Claude, GPT) looks at the frame, adds to your words and sends it at once (a fraction of a cent)',
+    loopTitle: 'Loop is on: the loop agent (Kimi K3.1 Pro first, then DeepSeek, Claude, GPT) looks at the frame, keeps what you asked for and adds everything '
+      + 'the loop needs to come back to its start frame - the people, the rain, the light, the camera. It works by itself (a fraction of a cent).',
     S, keep, onGo: generate,
   });
   // The page's events are heard from the start - the library speaks before the models are read.

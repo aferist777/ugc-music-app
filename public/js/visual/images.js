@@ -3,8 +3,8 @@
 // price on its right, the frame (the open project's by default - i4), how many (×1 · ×2 · ×4 - i5), the references
 // (up to ten, fewer when the model takes fewer - i3: library rows or the chat's pictures dropped there, Reference
 // under a picture, pictures from this computer) and where the pictures go (the Images folder selected in the library,
-// else its root - i7). On the right the chat, the Prompt enhancer tick (Claude Sonnet 5.5 sees the references and sends
-// at once - i6; grey with no Anthropic key: the words go as they are) and the field with Generate. Under every picture: Animate (the Animate tab, it as the start frame -
+// else its root - i7). On the right the chat, the Prompt enhancer tick (the agents' ladder sees the references and sends
+// at once - i6; grey with no kie.ai or Anthropic key: the words go as they are) and the field with Generate. Under every picture: Animate (the Animate tab, it as the start frame -
 // i8) and Reference. Pictures from this computer dropped on the tab go into Images / Uploads (i13).
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -202,7 +202,7 @@ export async function initImages() {
   panel = document.querySelector('[data-panel="images"]');
   ui = frame(panel, {
     placeholder: 'What the picture is - in your words, any language',
-    enhanceTitle: 'Claude Sonnet 5.5 looks at the references, adds to your words and sends it at once (about a cent)',
+    enhanceTitle: 'The enhancer (Kimi K3.1 Pro first, then DeepSeek, Claude, GPT) looks at the references, adds to your words and sends it at once (a fraction of a cent)',
     S, keep, onGo: generate,
   });
   // The page's events are heard from the start - the library and the timeline speak before the models are read.

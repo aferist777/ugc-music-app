@@ -13,7 +13,7 @@ const ENH = require('../lib/enhancer');
 const router = express.Router();
 const b = (req) => (req.body && typeof req.body === 'object' ? req.body : {});
 
-// `enhancer` - is there one (an Anthropic key): none - the Prompt enhancer tick is grey, what is picked goes as it is.
+// `enhancer` - is there one (a kie.ai or an Anthropic key): none - the Prompt enhancer tick is grey, what is picked goes as it is.
 router.get('/music/info', (req, res) => res.json({ models: SUNO.MODELS, prices: SUNO.PRICES, fake: FAKE, kie: !!getKey('kieApiKey'), enhancer: ENH.available() }));
 
 // A press: checked, written into the journal, done in the background. `into` - the Music folder selected at the press.

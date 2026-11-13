@@ -19,7 +19,7 @@ const keyed = () => {
   if (!FAKE && !getKey('kieApiKey')) throw Object.assign(new Error('there is no kie.ai key - add it in API keys'), { status: 400 });
 };
 
-// `enhancer` - is there one (an Anthropic key): none - the tick is grey and the words go as they are.
+// `enhancer` - is there one (a kie.ai or an Anthropic key): none - the tick is grey and the words go as they are.
 router.get('/visual/info', (req, res) => res.json({ images: IMAGES.info(), animate: ANIMATE.info(), fake: FAKE, kie: !!getKey('kieApiKey'), enhancer: ENH.available() }));
 
 // `into` - the folder of Images / Video selected in the library at the press.

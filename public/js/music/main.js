@@ -85,7 +85,7 @@ function check(obj, key, label, title, onChange, off) {
   if (title) l.title = off || title;
   const c = el('input');
   c.type = 'checkbox';
-  // `off` - why it cannot be ticked now (no Anthropic key): shown off, the person's choice kept for later.
+  // `off` - why it cannot be ticked now (no kie.ai or Anthropic key): shown off, the person's choice kept for later.
   c.checked = !off && !!obj[key];
   c.disabled = !!off;
   c.addEventListener('change', () => { obj[key] = c.checked; keep(); if (onChange) onChange(); });
@@ -93,8 +93,8 @@ function check(obj, key, label, title, onChange, off) {
   return l;
 }
 
-// No Anthropic key - no enhancer anywhere (the owner 2026-11-13): the tick's words for why.
-const _noEnhancer = () => (info.enhancer === false ? 'No Anthropic key - what you picked goes as it is. Add the key in API keys to have it enhanced.' : null);
+// No key for any model - no enhancer anywhere (the owner 2026-11-13): the tick's words for why.
+const _noEnhancer = () => (info.enhancer === false ? 'No kie.ai or Anthropic key - what you picked goes as it is. Add a key in API keys to have it enhanced.' : null);
 
 function knob(obj, key, label, min, max, step, title) {
   const r = el('div', 'mu-knob');
@@ -195,7 +195,7 @@ function paintBody() {
     const opts = el('div', 'mu-opts');
     opts.append(
       check(f, 'instrumental', 'Instrumental', 'Only the music. Untick it for a song: say what it is about and Suno writes the lyrics.', () => paintAll()),
-      check(f, 'writer', 'Prompt enhancer', 'The enhancer (Claude Sonnet 5.5, about a cent) turns the chips, the tags and your words into Suno\'s prompt; it is written into the track\'s description. Off - they go as they are.', null, _noEnhancer()),
+      check(f, 'writer', 'Prompt enhancer', 'The enhancer (Kimi K3.1 Pro first, then DeepSeek, Claude, GPT - a fraction of a cent) turns the chips, the tags and your words into Suno\'s prompt; it is written into the track\'s description. Off - they go as they are.', null, _noEnhancer()),
     );
     bodyBox.append(row('', opts));
     if (!f.instrumental) {
