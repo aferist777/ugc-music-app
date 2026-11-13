@@ -2,7 +2,7 @@
   "name": "ugc-music-studio",
   "productName": "UGC Music Studio",
   "version": "0.1.0",
-  "description": "Suno music, a tag assistant, pictures, Grok animation and a simple timeline - a desktop app.",
+  "description": "A small desktop studio for AI music videos: a tag assistant, Suno music, pictures, Grok 1.5 and Kling 3.0 clips and a timeline rendered to MP4.",
   "license": "MIT",
   "repository": {
     "type": "git",
