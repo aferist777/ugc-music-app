@@ -33,7 +33,8 @@ const APP = path.resolve(__dirname, '..');
 const REPO = 'aferist777/ugc-music-app';
 const PRIVATE = ['docs/plan.md', 'CLAUDE.md'];
 
-const run = (cmd, args, opts = {}) => execFileSync(cmd, args, Object.assign({ cwd: APP, windowsHide: true, maxBuffer: 1 << 30 }, opts)).toString();
+// A run whose output goes straight to the screen (stdio 'inherit') gives nothing back: an empty string then.
+const run = (cmd, args, opts = {}) => String(execFileSync(cmd, args, Object.assign({ cwd: APP, windowsHide: true, maxBuffer: 1 << 30 }, opts)) || '');
 const git = (args, cwd) => run('git', args, { cwd: cwd || APP });
 const die = (msg) => { console.error('release: ' + msg); process.exit(1); };
 
