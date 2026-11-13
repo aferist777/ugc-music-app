@@ -9,6 +9,7 @@ const IMAGES = require('../lib/images');
 const ANIMATE = require('../lib/animate');
 const VISUAL = require('../lib/visual');
 const CHATS = require('../lib/visual-chats');
+const ENH = require('../lib/enhancer');
 const { FAKE } = require('../lib/config');
 const { getKey } = require('../lib/settings');
 
@@ -18,17 +19,18 @@ const keyed = () => {
   if (!FAKE && !getKey('kieApiKey')) throw Object.assign(new Error('there is no kie.ai key - add it in API keys'), { status: 400 });
 };
 
-router.get('/visual/info', (req, res) => res.json({ images: IMAGES.info(), animate: ANIMATE.info(), fake: FAKE, kie: !!getKey('kieApiKey') }));
+// `enhancer` - is there one (an Anthropic key): none - the tick is grey and the words go as they are.
+router.get('/visual/info', (req, res) => res.json({ images: IMAGES.info(), animate: ANIMATE.info(), fake: FAKE, kie: !!getKey('kieApiKey'), enhancer: ENH.available() }));
 
 // `into` - the folder of Images / Video selected in the library at the press.
 router.post('/visual/images/gen', (req, res) => {
   keyed();
-  res.json({ job: VISUAL.start('image', IMAGES.normalize(b(req)), { into: String(b(req).into || '') }) });
+  res.json({ job: VISUAL.start('image', IMAGES.normalize(b(req), { enhancer: ENH.available() }), { into: String(b(req).into || '') }) });
 });
 
 router.post('/visual/animate/gen', (req, res) => {
   keyed();
-  res.json({ job: VISUAL.start('animate', ANIMATE.normalize(b(req)), { into: String(b(req).into || '') }) });
+  res.json({ job: VISUAL.start('animate', ANIMATE.normalize(b(req), { enhancer: ENH.available() }), { into: String(b(req).into || '') }) });
 });
 
 router.get('/visual/chat', (req, res) => res.json({ entries: CHATS.list(String(req.query.kind || '')) }));

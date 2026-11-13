@@ -1,6 +1,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 // WHAT THE IMAGES AND ANIMATE TABS SHARE (phase 5): the frame of a tab - the settings column on the left, the ONE chat
-// on the right (the owner's i2) with the Prompt enhancer tick over the field and Generate on its right -, the chat's
+// on the right (the owner's i2) with the Prompt enhancer tick over the field and Generate on its right - the tick grey
+// with no Anthropic key (the owner 2026-11-13: no key - nothing is enhanced, the words go as they are) -, the chat's
 // reading (it follows the journal while a press is being made), a picture or a clip opened large OVER ITS OWN TAB by a
 // press (the owner's i14), dragging a made file onto the timeline, and the person's own pictures brought in from this
 // computer (into Images / Uploads - the owner's i13).
@@ -59,7 +60,10 @@ export function select(options, value, onPick, title) {
 
 // ── The frame of a tab ──────────────────────────────────────────────────────
 
-/** Builds the tab: { side, thread, input, go, enhance } - the caller fills `side` and answers the press. */
+/**
+ * Builds the tab: { side, thread, input, go, setEnhancer, enhancing } - the caller fills `side` and answers the press;
+ * `setEnhancer(on)` - is there an enhancer (an Anthropic key); `enhancing()` - is the press to be enhanced.
+ */
 export function frame(panel, { placeholder, enhanceTitle, S, keep, onGo }) {
   panel.textContent = '';
   panel.classList.add('vz');
@@ -73,6 +77,15 @@ export function frame(panel, { placeholder, enhanceTitle, S, keep, onGo }) {
   box.type = 'checkbox';
   box.checked = S.enhance !== false;
   box.addEventListener('change', () => { S.enhance = box.checked; keep(); });
+  let present = true;
+  // No key: the tick shows off and cannot be pressed; the person's own choice is kept for when a key is there.
+  const setEnhancer = (on) => {
+    present = !!on;
+    box.disabled = !present;
+    box.checked = present && S.enhance !== false;
+    lab.classList.toggle('is-off', !present);
+    lab.title = present ? enhanceTitle : 'No Anthropic key - your words go as they are. Add the key in API keys to have them enhanced.';
+  };
   lab.append(box, document.createTextNode('Prompt enhancer'));
   opts.append(lab);
   const ask = el('form', 'ask');
@@ -98,7 +111,7 @@ export function frame(panel, { placeholder, enhanceTitle, S, keep, onGo }) {
   // Measured again whenever its width changes - a tab drawn while hidden measures nothing.
   let width = 0;
   new ResizeObserver(() => { if (input.offsetWidth !== width) { width = input.offsetWidth; grow(); } }).observe(input);
-  return { side, thread, input, go };
+  return { side, thread, input, go, setEnhancer, enhancing: () => present && S.enhance !== false };
 }
 
 // ── Opened large over its own tab (the owner's i14) ─────────────────────────
@@ -229,16 +242,25 @@ export function paintThread(thread, entries, grown, entryEl, emptyText) {
   if (grown || atEnd) thread.scrollTop = thread.scrollHeight; else thread.scrollTop = keepTop;
 }
 
-/** What every press shows: the person's words, the enhanced prompt folded, the line of what it was. */
+/** What every press shows: the person's words, the enhanced prompt folded (or why there is none), the line of what it was. */
 export function pressHead(e) {
   const out = [];
   out.push(el('div', 'vz-you', e.words || '(no words - the enhancer decided)'));
   if (e.prompt) {
     const d = el('details', 'vz-prompt');
-    d.append(el('summary', null, 'enhanced prompt · ' + (e.enhancedBy || 'Gemini')), el('div', 'vz-prompt-text', e.prompt));
+    d.append(el('summary', null, 'enhanced prompt · ' + (e.enhancedBy || 'Claude')), el('div', 'vz-prompt-text', e.prompt));
     out.push(d);
+  } else if (e.fell) {
+    const f = el('div', 'vz-fell', 'the enhancer failed - your words were sent as they are');
+    f.title = e.fell;
+    out.push(f);
   }
   return out;
+}
+
+/** The Keys window saved: what the tab offers is read again (an Anthropic key added or taken away). */
+export function onKeys(fn) {
+  window.addEventListener('ms:keys', fn);
 }
 
 export function pressLine(kind, e, facts) {

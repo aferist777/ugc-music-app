@@ -3,8 +3,8 @@
 // price on its right, the frame (the open project's by default - i4), how many (×1 · ×2 · ×4 - i5), the references
 // (up to ten, fewer when the model takes fewer - i3: library rows or the chat's pictures dropped there, Reference
 // under a picture, pictures from this computer) and where the pictures go (the Images folder selected in the library,
-// else its root - i7). On the right the chat, the Prompt enhancer tick (Gemini 3.8 Flash sees the references and sends
-// at once - i6) and the field with Generate. Under every picture: Animate (the Animate tab, it as the start frame -
+// else its root - i7). On the right the chat, the Prompt enhancer tick (Claude Sonnet 5.5 sees the references and sends
+// at once - i6; grey with no Anthropic key: the words go as they are) and the field with Generate. Under every picture: Animate (the Animate tab, it as the start frame -
 // i8) and Reference. Pictures from this computer dropped on the tab go into Images / Uploads (i13).
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -13,7 +13,7 @@ import { showError, showToast } from '../notice.js';
 import * as JOBS from '../music/jobs-store.js';
 import {
   el, thumbOf, money, loadState, keeper, seg, select, frame, resultTile, chatOf, paintThread,
-  pressHead, pressLine, bringIn, hasFiles, draggedPictures,
+  pressHead, pressLine, bringIn, hasFiles, draggedPictures, onKeys,
 } from './common.js';
 
 const LS = 'ms_images_v1';
@@ -187,7 +187,7 @@ async function generate() {
       method: 'POST',
       body: {
         model: m.id, tier: tierOf(m), aspect: S.aspect, count: S.count, words: S.words, refs: S.refs.slice(0, m.refs),
-        enhance: S.enhance !== false, into: folder.root === 'images' ? folder.rel : '',
+        enhance: ui.enhancing(), into: folder.root === 'images' ? folder.rel : '',
       },
     });
     JOBS.put(r.job);
@@ -205,7 +205,7 @@ export async function initImages() {
   panel = document.querySelector('[data-panel="images"]');
   ui = frame(panel, {
     placeholder: 'What the picture is - in your words, any language',
-    enhanceTitle: 'Gemini 3.8 Flash looks at the references, adds to your words and sends it at once',
+    enhanceTitle: 'Claude Sonnet 5.5 looks at the references, adds to your words and sends it at once (about a cent)',
     S, keep, onGo: generate,
   });
   // The page's events are heard from the start - the library and the timeline speak before the models are read.
@@ -215,7 +215,12 @@ export async function initImages() {
   const follow = (e) => { const f = e.detail && e.detail.format; if (f && info.aspects.includes(f) && f !== S.aspect) { S.aspect = f; keep(); paintSide(); } };
   window.addEventListener('ms:project-opened', follow);
   window.addEventListener('ms:format', follow);
-  try { info = (await api('/api/visual/info')).images; } catch (e) { showError('The picture models could not be read: ' + e.message); }
+  try {
+    const all = await api('/api/visual/info');
+    info = all.images;
+    ui.setEnhancer(all.enhancer);
+  } catch (e) { showError('The picture models could not be read: ' + e.message); }
+  onKeys(async () => { try { ui.setEnhancer((await api('/api/visual/info')).enhancer); } catch { /* as it was */ } });
   loaded = true;
   if (!info.models.some(m => m.id === S.model)) S.model = info.models[0] ? info.models[0].id : S.model;
   paintSide();

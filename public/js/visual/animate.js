@@ -1,10 +1,11 @@
 // ════════════════════════════════════════════════════════════════════════════
 // THE ANIMATE TAB (phase 5) - built like Images: one chat, forever. On the left the model (Grok 1.5 - the owner's i9;
-// Seedance 2.0 mini - a first and a last frame, i12), under it the length and the resolution with the price on their
-// right, the START FRAME - set by Animate under a picture of the Images chat or by a picture's right button on the
-// timeline (i8), or dropped on it - and for Seedance the LOOP tick (on: the clip ends on its start frame) or, unticked,
-// a last frame dropped on its place; then where the clip goes (the Video folder selected in the library, else its root
-// - i10). On the right the chat of clips, the Prompt enhancer tick (Gemini 3.8 Flash sees the frame) and the field.
+// Kling 3.0 - a first and a last frame, the owner 2026-11-13), under it the length and the resolution with the price on
+// their right, the START FRAME - set by Animate under a picture of the Images chat or by a picture's right button on
+// the timeline (i8), or dropped on it - and for Kling the LOOP tick (on: the clip ends on its start frame) or,
+// unticked, a last frame dropped on its place; then where the clip goes (the Video folder selected in the library, else
+// its root - i10). On the right the chat of clips, the Prompt enhancer tick (Claude Sonnet 5.5 sees the frame; grey with
+// no Anthropic key - the words go as they are) and the field.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { api } from '../api.js';
@@ -12,7 +13,7 @@ import { showError } from '../notice.js';
 import * as JOBS from '../music/jobs-store.js';
 import {
   el, thumbOf, money, loadState, keeper, select, frame, resultTile, chatOf, paintThread,
-  pressHead, pressLine, bringIn, hasFiles, draggedPictures,
+  pressHead, pressLine, bringIn, hasFiles, draggedPictures, onKeys,
 } from './common.js';
 
 const LS = 'ms_animate_v1';
@@ -158,7 +159,7 @@ async function generate() {
       method: 'POST',
       body: {
         model: m.id, duration: durOf(m), resolution: resOf(m), start: S.start, last: S.loop === false ? S.last : null,
-        loop: S.loop !== false, words: S.words, enhance: S.enhance !== false, into: folder.root === 'video' ? folder.rel : '',
+        loop: S.loop !== false, words: S.words, enhance: ui.enhancing(), into: folder.root === 'video' ? folder.rel : '',
       },
     });
     JOBS.put(r.job);
@@ -176,7 +177,7 @@ export async function initAnimate() {
   panel = document.querySelector('[data-panel="animate"]');
   ui = frame(panel, {
     placeholder: 'How it moves - in your words, any language',
-    enhanceTitle: 'Gemini 3.8 Flash looks at the frame, adds to your words and sends it at once',
+    enhanceTitle: 'Claude Sonnet 5.5 looks at the frame, adds to your words and sends it at once (about a cent)',
     S, keep, onGo: generate,
   });
   // The page's events are heard from the start - the library speaks before the models are read.
@@ -187,7 +188,12 @@ export async function initAnimate() {
     setStart(e.detail);
     window.dispatchEvent(new CustomEvent('ms:tab', { detail: { tab: 'animate' } }));
   });
-  try { info = (await api('/api/visual/info')).animate; } catch (e) { showError('The clip models could not be read: ' + e.message); }
+  try {
+    const all = await api('/api/visual/info');
+    info = all.animate;
+    ui.setEnhancer(all.enhancer);
+  } catch (e) { showError('The clip models could not be read: ' + e.message); }
+  onKeys(async () => { try { ui.setEnhancer((await api('/api/visual/info')).enhancer); } catch { /* as it was */ } });
   loaded = true;
   if (!info.models.some(m => m.id === S.model)) S.model = info.models[0] ? info.models[0].id : S.model;
   paintSide();

@@ -8,17 +8,19 @@ const JOBS = require('../lib/jobs');
 const LYRICS = require('../lib/lyrics-store');
 const { FAKE } = require('../lib/config');
 const { getKey } = require('../lib/settings');
+const ENH = require('../lib/enhancer');
 
 const router = express.Router();
 const b = (req) => (req.body && typeof req.body === 'object' ? req.body : {});
 
-router.get('/music/info', (req, res) => res.json({ models: SUNO.MODELS, prices: SUNO.PRICES, fake: FAKE, kie: !!getKey('kieApiKey') }));
+// `enhancer` - is there one (an Anthropic key): none - the Prompt enhancer tick is grey, what is picked goes as it is.
+router.get('/music/info', (req, res) => res.json({ models: SUNO.MODELS, prices: SUNO.PRICES, fake: FAKE, kie: !!getKey('kieApiKey'), enhancer: ENH.available() }));
 
 // A press: checked, written into the journal, done in the background. `into` - the Music folder selected at the press.
 router.post('/music/gen', (req, res) => {
   const body = b(req);
   if (!FAKE && !getKey('kieApiKey')) throw Object.assign(new Error('there is no kie.ai key - add it in API keys'), { status: 400 });
-  const r = SUNO.normalize(String(body.mode || ''), body);
+  const r = SUNO.normalize(String(body.mode || ''), body, { enhancer: ENH.available() });
   res.json({ job: JOBS.start(r, { into: String(body.into || '') }) });
 });
 

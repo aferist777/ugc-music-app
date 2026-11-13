@@ -80,16 +80,21 @@ function input(obj, key, { area, rows, placeholder, max, title } = {}) {
   return t;
 }
 
-function check(obj, key, label, title, onChange) {
-  const l = el('label', 'check');
-  if (title) l.title = title;
+function check(obj, key, label, title, onChange, off) {
+  const l = el('label', 'check' + (off ? ' is-off' : ''));
+  if (title) l.title = off || title;
   const c = el('input');
   c.type = 'checkbox';
-  c.checked = !!obj[key];
+  // `off` - why it cannot be ticked now (no Anthropic key): shown off, the person's choice kept for later.
+  c.checked = !off && !!obj[key];
+  c.disabled = !!off;
   c.addEventListener('change', () => { obj[key] = c.checked; keep(); if (onChange) onChange(); });
   l.append(c, document.createTextNode(label));
   return l;
 }
+
+// No Anthropic key - no enhancer anywhere (the owner 2026-11-13): the tick's words for why.
+const _noEnhancer = () => (info.enhancer === false ? 'No Anthropic key - what you picked goes as it is. Add the key in API keys to have it enhanced.' : null);
 
 function knob(obj, key, label, min, max, step, title) {
   const r = el('div', 'mu-knob');
@@ -190,7 +195,7 @@ function paintBody() {
     const opts = el('div', 'mu-opts');
     opts.append(
       check(f, 'instrumental', 'Instrumental', 'Only the music. Untick it for a song: say what it is about and Suno writes the lyrics.', () => paintAll()),
-      check(f, 'writer', 'Prompt enhancer', 'The enhancer (Claude → Gemini → GPT, about a cent) turns the chips, the tags and your words into Suno\'s prompt; it is written into the track\'s description. Off - they go as they are.'),
+      check(f, 'writer', 'Prompt enhancer', 'The enhancer (Claude Sonnet 5.5, about a cent) turns the chips, the tags and your words into Suno\'s prompt; it is written into the track\'s description. Off - they go as they are.', null, _noEnhancer()),
     );
     bodyBox.append(row('', opts));
     if (!f.instrumental) {
@@ -233,7 +238,7 @@ function paintBody() {
     const opts = el('div', 'mu-opts');
     opts.append(
       check(f, 'instrumental', 'Instrumental', 'Only the music: no voice and no lyrics.', () => paintBody()),
-      check(f, 'writer', 'Prompt enhancer', 'It keeps every word of your style and adds what it leaves open - the sub-genre, a tempo, named instruments, the production.'),
+      check(f, 'writer', 'Prompt enhancer', 'It keeps every word of your style and adds what it leaves open - the sub-genre, a tempo, named instruments, the production.', null, _noEnhancer()),
     );
     bodyBox.append(row('', opts));
   } else {
@@ -528,6 +533,10 @@ export async function initMusic() {
   askBox.addEventListener('submit', (e) => { e.preventDefault(); generate(); });
 
   try { info = await api('/api/music/info'); } catch { /* the defaults */ }
+  window.addEventListener('ms:keys', async () => {
+    try { info = await api('/api/music/info'); } catch { return; }
+    if (S.mode !== 'lyrics') paintBody();
+  });
   try { mix = ((await api('/api/tags/mix')).tags || []).map(t => t.tag); } catch { mix = []; }
   window.addEventListener('ms:mix', (e) => {
     mix = (e.detail || []).map(t => t.tag);
