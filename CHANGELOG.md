@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 - 2026-11-13
+
+### Fixed
+- Publishing: the release tool no longer stops after sending the code, so every release now comes with its Windows download in one step. Nothing changes in how the app works.
+
 ## 0.2.0 - 2026-11-13
 
 ### New
@@ -13,4 +18,3 @@
 
 ### Updating from 0.1.0
 0.1.0 has no updater yet, so update it once by hand: run `git pull` in the app's folder (then `npm install`), or download the ready app above. From 0.2.0 on, updates come to the app by themselves.
-
