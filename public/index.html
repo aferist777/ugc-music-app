@@ -13,6 +13,7 @@
     <span class="brand">UGC Music Studio</span>
     <span class="top-sp"></span>
     <span class="fake-chip" id="fake-chip" hidden title="Free test runs: nothing paid is asked">FAKE</span>
+    <button class="btn update-chip" id="update-chip" hidden>Update</button>
     <button class="btn ghost" id="jobs-open" title="The journal of generations">Jobs</button>
     <button class="btn ghost" id="keys-open">API keys<span class="keys-dot" id="keys-dot" hidden></span></button>
     <button class="btn ghost" id="theme-toggle" title="Light or dark">Light</button>
@@ -124,6 +125,23 @@
       <div class="dialog-foot">
         <span class="dialog-msg" id="keys-msg" role="status"></span>
         <button class="btn primary" id="keys-save" type="submit" form="keys-form">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="update-overlay" hidden>
+    <div class="dialog update-dialog" role="dialog" aria-modal="true" aria-labelledby="update-title">
+      <div class="dialog-head">
+        <h2 id="update-title">Update UGC Music Studio</h2>
+        <button class="btn icon ghost" id="update-close" title="Close (Esc)">
+          <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3.5 3.5l9 9m0-9l-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="dialog-body update-body" id="update-body"></div>
+      <div class="dialog-foot">
+        <span class="dialog-msg" id="update-msg" role="status"></span>
+        <button class="btn ghost" id="update-later">Later</button>
+        <button class="btn primary" id="update-go">Update now</button>
       </div>
     </div>
   </div>

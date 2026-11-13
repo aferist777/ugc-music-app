@@ -11,6 +11,7 @@ import { initJobs } from './jobs.js';
 import { initImages } from './visual/images.js';
 import { initAnimate } from './visual/animate.js';
 import { initTimeline } from './timeline/main.js';
+import { initUpdate } from './update.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -71,6 +72,7 @@ async function start() {
   initImages();
   initAnimate();
   initTimeline();
+  initUpdate();
   try {
     const h = await api('/api/health');
     $('fake-chip').hidden = !h.fake;

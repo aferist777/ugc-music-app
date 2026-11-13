@@ -27,6 +27,7 @@ function createApp() {
   app.use('/api', require('./routes/music'));
   app.use('/api', require('./routes/projects'));
   app.use('/api', require('./routes/visual'));
+  app.use('/api', require('./routes/update'));
   app.use('/api', (req, res) => res.status(404).json({ error: 'no such route' }));
   // The library's files by their address: /media/<root>/<folders>/<name> (ranges answered - the player seeks).
   for (const r of ROOTS) {
@@ -62,6 +63,8 @@ async function start({ port = 3310, tryNext = false } = {}) {
   const app = createApp();
   // The journal: what was waiting when the app closed goes on (or is failed in words - never asked again by itself).
   require('./lib/jobs').boot();
+  // Updates from GitHub (phase 8): a copy installed from there asks a minute after the start and every six hours.
+  require('./lib/updates').start();
   for (let i = 0; i < (tryNext ? 20 : 1); i++) {
     try {
       const server = await _listen(app, port + i);
