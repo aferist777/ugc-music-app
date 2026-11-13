@@ -18,7 +18,9 @@
 //          anything shaped like a key - one hit and nothing is sent;
 //       4. main and the tag pushed to https://github.com/aferist777/ugc-music-app (gh's sign-in, only for that push -
 //          git's own settings untouched; never forced: a main that does not just move forward is refused), and the
-//          GitHub Release made with the notes - the copies installed from GitHub show "Update <version>".
+//          GitHub Release made with the notes - the copies installed from GitHub show "Update <version>";
+//       5. the built app (tools/build-exe.js, from the release commit) uploaded to the release as
+//          UGC-Music-Studio-<version>-win-x64.zip - the download for people without Node.js.
 //       --dry: steps 1 and 3 only - nothing is changed here, nothing sent.
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -155,6 +157,10 @@ function publish(version, notesFile, dry) {
   fs.writeFileSync(notesTmp, text + '\n');
   run('gh', ['release', 'create', 'v' + version, '--repo', REPO, '--title', 'UGC Music Studio ' + version, '--notes-file', notesTmp], { stdio: ['ignore', 'inherit', 'inherit'] });
   fs.rmSync(notesTmp, { force: true });
+  console.log('building the app...');
+  run(process.execPath, [path.join(APP, 'tools', 'build-exe.js')], { stdio: ['ignore', 'inherit', 'inherit'] });
+  const zip = path.join(os.tmpdir(), 'ugc-music-build', version, 'UGC-Music-Studio-' + version + '-win-x64.zip');
+  run('gh', ['release', 'upload', 'v' + version, zip, '--repo', REPO], { stdio: ['ignore', 'inherit', 'inherit'] });
   console.log('released ' + version + ' - https://github.com/' + REPO + '/releases/tag/v' + version);
 }
 

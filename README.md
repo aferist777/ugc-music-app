@@ -39,11 +39,30 @@ keeps everything in plain folders, and talks to the AI services with your own AP
 ## Requirements
 
 - Windows 10 or 11 (64-bit). It is built with Electron and may run elsewhere, but only Windows is tested.
-- [Node.js](https://nodejs.org/) 20 or newer (developed with Node.js 24) and npm.
+- Only to run it from source: [Node.js](https://nodejs.org/) 20 or newer (developed with Node.js 24) and npm. The
+  Windows download needs nothing else.
 - An API key from [kie.ai](https://kie.ai) for the generations. An [Anthropic](https://console.anthropic.com) key is
   optional.
 
 ## Install and start
+
+### Download (Windows)
+
+1. Download `UGC-Music-Studio-<version>-win-x64.zip` from the [latest release](https://github.com/aferist777/ugc-music-app/releases/latest).
+2. Unpack it anywhere you like - your Documents, another drive.
+3. Start **UGC Music Studio.exe** in the unpacked folder.
+
+Nothing else is needed - no Node.js, git or npm. Windows may say the app is from an unknown publisher (it is not
+code-signed): press **More info**, then **Run anyway**.
+
+```
+UGC Music Studio\
+  UGC Music Studio.exe    start this
+  app\                    the program
+  library\                your files and the app's data - made at the first start
+```
+
+### From source
 
 ```bash
 git clone https://github.com/aferist777/ugc-music-app.git
@@ -53,19 +72,22 @@ npm start
 ```
 
 `npm install` also downloads Electron and an ffmpeg binary. After that, `UGC Music Studio.cmd` starts the app with a
-double click.
-
-On the first start the app makes its library - the folder `library/` inside the app's folder - with `Music`, `Images`
-and `Video` in it. Everything the app writes goes there and nowhere else. To keep the library somewhere else, set
+double click. Its library is the folder `library/` inside the app's folder. To keep the library somewhere else, set
 `MUSIC_LIBRARY_DIR` to a folder before starting.
+
+Either way, the library holds `Music`, `Images` and `Video` - everything the app writes goes there and nowhere else.
 
 ## Updates
 
 When a newer version is released, an **Update** chip appears at the top of the window. Press it to read what changed,
-then **Update now**: the app keeps a copy of its own data in `library/backups`, puts the new version in place (a git
-clone moves forward with git; a downloaded ZIP gets the new files) and restarts. Your library is never touched, and
-nothing is forced - the chip simply waits until you press it. The app asks GitHub for new releases a minute after it
-starts and every six hours.
+then **Update now**: the app keeps a copy of its own data in `library/backups`, puts the new version in place and
+restarts. Your library is never touched, and nothing is forced - the chip simply waits until you press it. The app
+asks GitHub for new releases a minute after it starts and every six hours.
+
+- The Windows download gets the new program files. When a release changes the app's parts (Electron or its packages),
+  the window links the new full download instead - unpack it over the old folder; your library stays.
+- A copy from source moves forward with git (a clone) or gets the new files (a downloaded ZIP), then runs
+  `npm install` when the packages changed.
 
 Version 0.1.0 has no updater yet: update it once by hand (`git pull` in its folder, or download it again).
 
