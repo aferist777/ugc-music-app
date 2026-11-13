@@ -2,8 +2,13 @@
   "name": "ugc-music-studio",
   "productName": "UGC Music Studio",
   "version": "0.1.0",
-  "private": true,
   "description": "Suno music, a tag assistant, pictures, Grok animation and a simple timeline - a desktop app.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aferist777/ugc-music-app.git"
+  },
+  "private": true,
   "main": "desktop/main.js",
   "scripts": {
     "start": "electron .",

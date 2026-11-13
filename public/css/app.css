@@ -217,6 +217,7 @@ body.is-dragging-h { cursor: row-resize; }
 .tg-text p { margin: 0 0 6px; }
 .tg-text ul, .tg-text ol { margin: 0 0 6px; padding-left: 18px; }
 .tg-text h4 { margin: 10px 0 4px; font-size: 12px; }
+.tg-text blockquote { margin: 0 0 6px; padding: 4px 10px; border-left: 2px solid var(--line2); background: var(--hover); color: var(--ink2); }
 .tg-text code { font: 11px var(--mono); padding: 0 3px; background: var(--sel); border-radius: 2px; }
 .tg-sources { margin: 2px 0 6px; font-size: 11px; color: var(--muted); }
 .tg-sources summary { cursor: pointer; }
