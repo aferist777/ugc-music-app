@@ -60,6 +60,8 @@ UGC Music Studio\
   UGC Music Studio.exe    start this
   app\                    the program
   library\                your files and the app's data - made at the first start
+  LICENSE.txt             the app's license (MIT)
+  THIRD-PARTY-NOTICES.txt the software by others inside, with their licenses
 ```
 
 ### From source
@@ -141,6 +143,20 @@ modules - no build step.
 
 UGC Music Studio is not made by or connected with Suno, kie.ai, Anthropic, Google, OpenAI, xAI, Kuaishou, Moonshot AI
 or DeepSeek. What you make with their models is subject to their terms.
+
+## Third-party licenses
+
+UGC Music Studio's own code is under the MIT License. It is built on, and the Windows download includes, software by
+others under their own licenses:
+
+| What | License |
+|---|---|
+| [Electron](https://www.electronjs.org/) and the Chromium inside it | MIT; Chromium - BSD-style and others (`app\LICENSES.chromium.html` in the download) |
+| [FFmpeg](https://ffmpeg.org/) - a separate program the app runs; the Windows build by [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), brought by [ffmpeg-static](https://github.com/eugeneware/ffmpeg-static) | **GNU GPL v3** (or later) - its license text, build notes and the link to its source are beside `ffmpeg.exe` and in `THIRD-PARTY-NOTICES.txt` |
+| Node.js packages - Express, the Anthropic SDK and what they use | MIT, ISC, BSD, Apache-2.0, Unlicense |
+
+The Windows download lists every one of them, with its license's full text, in `THIRD-PARTY-NOTICES.txt` beside the
+exe. Installed from source, `npm install` brings each package with its own license.
 
 ## Support
 
