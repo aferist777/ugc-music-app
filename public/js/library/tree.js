@@ -6,7 +6,7 @@
 // ONE ROOT IS UNFOLDED AT A TIME (phase 6, the owner): Projects, Music, Images, Video, Archive - one unfolded folds the
 // others (the folders inside each keep their own state); a press on a root shows its files and unfolds it.
 // Phase 9: "+" at the right of Projects makes a new project - as does New project under the timeline's project name
-// (the event `ms:project-new`).
+// (the event `ms:project-new`); a double press on a project's row renames it in place (the owner, 2026-11-19).
 // ════════════════════════════════════════════════════════════════════════════
 
 import { remembered, remember } from '../api.js';
@@ -138,7 +138,11 @@ export function initTree(L) {
         const pic = el('span', 'tn-icon');
         pic.innerHTML = icon('project', 16);
         row.append(pic, el('span', 'tn-name', p.name));
-        row.addEventListener('click', () => window.dispatchEvent(new CustomEvent('ms:project-open', { detail: { id: p.id } })));
+        // A press opens the project (the open one is not read again - a double press's first press); two rename it.
+        row.addEventListener('click', () => {
+          if (p.id !== L.S.project) window.dispatchEvent(new CustomEvent('ms:project-open', { detail: { id: p.id } }));
+        });
+        row.addEventListener('dblclick', () => _renameProject(p));
         row.addEventListener('contextmenu', (e) => {
           e.preventDefault();
           openMenu(e.clientX, e.clientY, [
@@ -172,6 +176,7 @@ export function initTree(L) {
     const row = host.querySelector('[data-project="' + p.id + '"]');
     if (!row) return;
     const name = row.querySelector('.tn-name');
+    if (!name) return; // its name is being typed already
     const input = el('input', 'rename-input');
     input.value = p.name;
     input.spellcheck = false;
@@ -196,6 +201,7 @@ export function initTree(L) {
     });
     input.addEventListener('blur', () => finish(true));
     input.addEventListener('click', (e) => e.stopPropagation());
+    input.addEventListener('dblclick', (e) => e.stopPropagation());
   }
 
   async function _deleteProject(p) {
