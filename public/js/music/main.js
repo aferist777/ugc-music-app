@@ -1,7 +1,9 @@
 // ════════════════════════════════════════════════════════════════════════════
 // THE MUSIC TAB (phase 3; the minimal design of 2026-11-12 - the showcase's variant B) - UGC Studio's music chat through
-// Suno, music only: Simple (the default), Custom, Lyrics. The chips in rows (Genre, Mood, Sound) and "From Tags" - the
-// tags picked in the Tags tab; the options in rows; Recent; at the bottom the mode's main field with Generate on its
+// Suno, music only: Simple (the default), Custom, Lyrics. Phase 9 (the owner's B4): one row of three group buttons -
+// Genre, Mood, Sound - each showing or hiding its row of chips under it, any of them at once; under them the TAGS OF
+// THE CHAT OPEN IN THE TAGS TAB, every one once, picked by a press here or there alike (tags/main.js `chatTags`,
+// `toggleChatTag`); the options in rows; Recent; at the bottom the mode's main field with Generate on its
 // right (Simple: your words, Custom: the style, Lyrics: the idea) and, small under it, where the tracks go - the Music
 // folder selected in the library, else Music's root - and the price. A press is the server's from the moment it is made
 // (lib/jobs.js): this page only follows the journal (jobs-store.js).
@@ -11,6 +13,7 @@ import { api } from '../api.js';
 import { showError, showToast } from '../notice.js';
 import { openMenu } from '../menu.js';
 import { CHIPS } from './chips.js';
+import { chatTags, toggleChatTag } from '../tags/main.js';
 import * as JOBS from './jobs-store.js';
 import { playTrack, revealFile } from '../library/main.js';
 
@@ -25,7 +28,8 @@ const MAIN = {
 
 const DEF = {
   mode: 'simple', model: 'V6',
-  simple: { picked: { genre: [], mood: [], sound: [] }, mixOff: [], words: '', about: '', instrumental: true, writer: true, seconds: '' },
+  groups: [],      // the chip groups shown - their rows under the group buttons
+  simple: { picked: { genre: [], mood: [], sound: [] }, words: '', about: '', instrumental: true, writer: true, seconds: '' },
   custom: { title: '', style: '', instrumental: false, lyrics: '', vocal: '', negative: '', styleWeight: '', weirdness: '', variety: '', writer: false, seconds: '' },
   lyrics: { idea: '' },
 };
@@ -39,13 +43,15 @@ function _load() {
   const out = clone(DEF);
   for (const k of ['mode', 'model']) if (s[k]) out[k] = s[k];
   for (const k of ['simple', 'custom', 'lyrics']) Object.assign(out[k], s[k] || {});
+  delete out.simple.mixOff;
+  out.groups = (Array.isArray(s.groups) ? s.groups : []).filter(g => GROUPS.some(x => x[0] === g));
   out.simple.picked = Object.assign(clone(DEF.simple.picked), out.simple.picked || {});
   if (!MODES.some(m => m[0] === out.mode)) out.mode = 'simple';
   return out;
 }
 
 const S = _load();
-let mix = [];
+let chat = null;   // the Tags tab's open chat: { id, title, tags: [{ tag, group, why }], picked } - null when none
 let folder = { root: 'music', rel: '' };
 let info = { models: ['V6', 'V6_MINI', 'V6_WILD'], prices: {}, fake: false };
 let saved = [];
@@ -139,7 +145,23 @@ function _addToStyle(words) {
 
 function _chipRows() {
   const out = [];
+  // The group buttons: a press shows or hides the group's chips under them; the number - how many are picked in it.
+  const groups = el('div', 'chips');
   for (const [g, label] of GROUPS) {
+    const shown = S.groups.includes(g);
+    const n = S.mode === 'simple' ? S.simple.picked[g].length : 0;
+    const b = chip(label + (n ? ' · ' + n : '') + (shown ? ' ▴' : ' ▾'), shown, () => {
+      const i = S.groups.indexOf(g);
+      if (i >= 0) S.groups.splice(i, 1); else S.groups = GROUPS.map(x => x[0]).filter(x => x === g || S.groups.includes(x));
+      keep();
+      paintBody();
+    }, shown ? 'Hide the ' + label.toLowerCase() + ' chips' : 'Show the ' + label.toLowerCase() + ' chips');
+    b.classList.add('mu-group');
+    groups.append(b);
+  }
+  out.push(row('Chips', groups));
+  for (const [g, label] of GROUPS) {
+    if (!S.groups.includes(g)) continue;
     const box = el('div', 'chips');
     for (const c of CHIPS[g]) {
       const on = S.mode === 'simple' && S.simple.picked[g].includes(c.id);
@@ -155,25 +177,23 @@ function _chipRows() {
     }
     out.push(row(label, box));
   }
+  // The tags of the chat open in the Tags tab - every one once; none picked until pressed (the owner's B1-B3).
   const tags = el('div', 'chips');
-  if (!mix.length) tags.append(el('span', 'hint', 'pick tags in an answer of the Tags tab'));
-  for (const t of mix) {
-    const on = S.mode === 'simple' && !S.simple.mixOff.includes(t);
-    tags.append(chip(t, on, () => {
-      if (S.mode === 'custom') { _addToStyle(t); return; }
-      const off = S.simple.mixOff;
-      const i = off.indexOf(t);
-      if (i >= 0) off.splice(i, 1); else off.push(t);
-      keep();
-      paintBody();
-    }));
+  const list = chat ? chat.tags.map(t => t.tag) : [];
+  if (!list.length) tags.append(el('span', 'hint', 'Ask in the Tags tab - its tags show here'));
+  for (const t of chat ? chat.tags : []) {
+    const on = S.mode === 'simple' && chat.picked.includes(t.tag);
+    tags.append(chip(t.tag, on, () => {
+      if (S.mode === 'custom') { _addToStyle(t.tag); return; }
+      toggleChatTag(t.tag);
+    }, t.why));
   }
-  if (S.mode === 'custom' && mix.length) {
+  if (S.mode === 'custom' && list.length) {
     const all = el('button', 'link', '+ all');
-    all.title = 'Add every tag to the style';
+    all.title = 'Add every tag of the chat to the style';
     all.addEventListener('click', () => {
       const have = S.custom.style.toLowerCase();
-      const add = mix.filter(t => !have.includes(t.toLowerCase()));
+      const add = list.filter(t => !have.includes(t.toLowerCase()));
       if (!add.length) { showToast('They are in the style already.'); return; }
       S.custom.style = [S.custom.style.trim(), ...add].filter(Boolean).join(', ');
       keep();
@@ -182,7 +202,14 @@ function _chipRows() {
     });
     tags.append(all);
   }
-  out.push(row('From Tags', tags));
+  const box = el('div', 'mu-chat');
+  if (chat && chat.title) {
+    const name = el('div', 'mu-chat-name', chat.title);
+    name.title = 'The chat open in the Tags tab';
+    box.append(name);
+  }
+  box.append(tags);
+  out.push(row('Tags', box));
   return out;
 }
 
@@ -479,7 +506,7 @@ async function generate() {
   let body;
   if (S.mode === 'simple') {
     body = {
-      mode: 'simple', model: S.model, chips: f.picked, mix: mix.filter(t => !f.mixOff.includes(t)), words: f.words,
+      mode: 'simple', model: S.model, chips: f.picked, mix: chat ? chat.picked.slice() : [], words: f.words,
       instrumental: f.instrumental, about: f.about, writer: f.writer, seconds: f.seconds,
     };
   } else if (S.mode === 'custom') {
@@ -537,10 +564,9 @@ export async function initMusic() {
     try { info = await api('/api/music/info'); } catch { return; }
     if (S.mode !== 'lyrics') paintBody();
   });
-  try { mix = ((await api('/api/tags/mix')).tags || []).map(t => t.tag); } catch { mix = []; }
-  window.addEventListener('ms:mix', (e) => {
-    mix = (e.detail || []).map(t => t.tag);
-    S.simple.mixOff = S.simple.mixOff.filter(t => mix.includes(t));
+  chat = chatTags();
+  window.addEventListener('ms:tags-chat', (e) => {
+    chat = e.detail || null;
     if (S.mode !== 'lyrics') paintBody();
   });
   window.addEventListener('ms:folder', (e) => { folder = e.detail || folder; paintMeta(); });

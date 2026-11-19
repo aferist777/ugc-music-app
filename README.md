@@ -10,13 +10,16 @@ keeps everything in plain folders, and talks to the AI services with your own AP
 
 - **Tags** - a tag assistant. Describe the music you want in any language, or drop a picture: it reads the scene's
   vibe and answers with an explanation and genre, mood and sound tags to pick from. It talks about music only.
-- **Music** - Suno through kie.ai: Simple (your words and the chips), Custom (your style and lyrics) and Lyrics.
-  An optional prompt enhancer turns your choices into Suno's prompt. Two tracks per press.
+- **Music** - Suno through kie.ai: Simple (your words, genre / mood / sound chips and the tags of the chat open in
+  Tags), Custom (your style and lyrics) and Lyrics. An optional prompt enhancer turns your choices into Suno's prompt.
+  Two tracks per press.
 - **Images** - pictures from nano-banana-2, nano-banana-2-lite, grok-imagine-image-2 and gpt-image-2.5-sunburst:
   1K / 2K / 4K where the model has them, 16:9, 9:16 or 1:1, one to four at a time, up to 10 reference pictures.
 - **Animate** - a picture into a clip with Grok 1.5 or Kling 3.0 (3-15 s, 720p / 1080p / 4K). Kling can end on a
   last frame you choose, or **loop** back to its start frame; with Loop on, a loop agent looks at the picture and
   writes the motion so the clip comes back to where it began.
+- **Projects** - each a timeline of its own: "+" next to Projects in the library makes one, and the project's name
+  over the timeline switches between them.
 - **Library** - Music, Images and Video as real folders on disk: make, rename, move and nest folders; play, view,
   rename and move files; bring in pictures from your computer; an Archive before anything is deleted for good.
   **Every file the app makes has a `.txt` beside it** - the model, the settings and the exact prompt.

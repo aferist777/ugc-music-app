@@ -155,7 +155,7 @@ function undo(redo) {
 // ── Drawing ─────────────────────────────────────────────────────────────────
 
 function paintAll() {
-  $('tl-name').textContent = S.p ? S.p.name : '';
+  $('tl-name').textContent = S.p ? S.p.name + ' ▾' : '';
   $('tl-format').textContent = S.p && S.p.format === '9:16' ? '16:9' : '9:16';
   $('tl-format').title = 'The frame is ' + (S.p ? S.p.format : '16:9') + ' - press for ' + $('tl-format').textContent;
   preview.setFormat(S.p ? S.p.format : '16:9');
@@ -733,6 +733,19 @@ export async function initTimeline() {
   });
 
   window.addEventListener('ms:project-open', async (e) => { await flush(); load(e.detail.id); });
+  // The project's name opens the list of projects (phase 9, the owner's B5): another one, or a new one - made and named
+  // under Projects in the library, as its "+" does.
+  $('tl-name').addEventListener('click', async () => {
+    let list = [];
+    try { list = (await api('/api/projects')).projects || []; } catch (e) { showError(e.message); return; }
+    const r = $('tl-name').getBoundingClientRect();
+    const open = (id) => window.dispatchEvent(new CustomEvent('ms:project-open', { detail: { id } }));
+    openMenu(r.left, r.bottom + 2, [
+      ...list.map(p => ({ label: (S.p && p.id === S.p.id ? '✓ ' : '') + p.name, act: () => { if (!S.p || p.id !== S.p.id) open(p.id); } })),
+      { sep: true },
+      { label: 'New project', act: () => window.dispatchEvent(new CustomEvent('ms:project-new')) },
+    ]);
+  });
   window.addEventListener('ms:project-renamed', (e) => { if (S.p && e.detail.id === S.p.id) load(S.p.id); });
   window.addEventListener('ms:project-deleted', (e) => { if (S.p && e.detail.id === S.p.id) { S.p = null; ensureProject(); } });
   // A file renamed, moved or archived in the library: the project is read again (the server followed it).

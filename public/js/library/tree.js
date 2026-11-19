@@ -5,6 +5,8 @@
 // folder (a folder of Images keeps them, anywhere else Images / Uploads - phase 5). Which folders are unfolded is remembered.
 // ONE ROOT IS UNFOLDED AT A TIME (phase 6, the owner): Projects, Music, Images, Video, Archive - one unfolded folds the
 // others (the folders inside each keep their own state); a press on a root shows its files and unfolds it.
+// Phase 9: "+" at the right of Projects makes a new project - as does New project under the timeline's project name
+// (the event `ms:project-new`).
 // ════════════════════════════════════════════════════════════════════════════
 
 import { remembered, remember } from '../api.js';
@@ -31,6 +33,7 @@ export function initTree(L) {
   if (firstRoot) onlyRoot(firstRoot.slice(0, -1));
 
   const keep = () => remember({ unfolded: [...unfolded] });
+  window.addEventListener('ms:project-new', () => newProject());
 
   function paint() {
     host.textContent = '';
@@ -116,7 +119,10 @@ export function initTree(L) {
     caret.innerHTML = icon('caret', 12);
     const ic = el('span', 'tn-icon');
     ic.innerHTML = icon('project', 16);
-    head.append(caret, ic, el('span', 'tn-name', 'Projects'));
+    const add = el('button', 'tn-add', '+');
+    add.title = 'New project';
+    add.addEventListener('click', (e) => { e.stopPropagation(); newProject(); });
+    head.append(caret, ic, el('span', 'tn-name', 'Projects'), add);
     head.addEventListener('click', () => _fold('projects', ''));
     head.addEventListener('contextmenu', (e) => {
       e.preventDefault();
@@ -281,7 +287,8 @@ export function initTree(L) {
       if (parts.length) onlyRoot(root);
       if ([...unfolded].sort().join('|') !== was) { keep(); paint(); return; }
     }
-    for (const r of host.querySelectorAll('.tn-row')) {
+    // The folders' rows only - a project's row keeps its own mark (the project open on the timeline).
+    for (const r of host.querySelectorAll('.tn-row[data-root]')) {
       r.classList.toggle('is-on', r.dataset.root === root && r.dataset.rel === rel);
     }
   }

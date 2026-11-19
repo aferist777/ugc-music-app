@@ -1,8 +1,9 @@
 // ════════════════════════════════════════════════════════════════════════════
 // THE TAGS TAB (phase 2): the list of chats on the left (the owner's V5 - each named after the style of its first
 // answer, each keeping its chips), the chat on the right: the person's messages, the assistant's answers with their
-// sources (folded, V7) and their tags in three groups; a press on a tag puts it into the Mix (again - takes it out), the
-// Mix is one for the whole tab and kept on the server; "+ tag" adds one's own (V4). While an answer is being made the
+// sources (folded, V7) and their tags in three groups; a press on a tag picks it (again - lets it go). Phase 9: the
+// picked tags are the CHAT's, kept in it on the server; the Music tab shows the tags of the chat open here, each once,
+// and picks them the same way (`chatTags`, `toggleChatTag`, the event `ms:tags-chat`). While an answer is being made the
 // chat shows what the assistant is doing and for how long (V6) - the page only follows the server (lib/tags-store.js).
 // Phase 7: PICTURES - up to 4 dropped on the tab (from the library's rows, the Images / Animate chats or this computer -
 // those into Images / Uploads first) or pasted into the field; shown over the field with ✕, sent with the message (or
@@ -31,7 +32,7 @@ const S = {
   open: null,      // the open chat's id; null - a new chat, made by its first message
   chat: null,
   pending: null,
-  mix: [],
+  picked: [],      // the open chat's picked tags - the page's own while a save is on its way
   pics: [],        // pictures waiting to go with the next message: [{ root: 'images', rel }]
 };
 
@@ -54,6 +55,7 @@ async function loadChats() {
 }
 
 function paintChats() {
+  paintPicked();
   const host = $('tg-chats');
   host.textContent = '';
   if (!S.chats.length) {
@@ -135,6 +137,7 @@ function newChat() {
   S.open = null;
   S.chat = null;
   S.pending = null;
+  S.picked = [];
   remember({ tagsChat: null });
   _stopPolling();
   paintThread();
@@ -149,6 +152,7 @@ async function open(id) {
     S.open = id;
     S.chat = r.chat;
     S.pending = r.pending;
+    S.picked = Array.isArray(r.chat.picked) ? r.chat.picked.slice() : [];
     remember({ tagsChat: id });
   } catch (e) {
     showError(e.message);
@@ -223,11 +227,11 @@ function _answer(m) {
 }
 
 function _chip(tag, group, why) {
-  const b = el('button', 'chip' + (S.mix.some(t => t.tag === tag) ? ' is-on' : ''), tag);
+  const b = el('button', 'chip' + (S.picked.includes(tag) ? ' is-on' : ''), tag);
   b.dataset.tag = tag;
   b.dataset.group = group;
   if (why) b.title = why;
-  b.addEventListener('click', () => toggleMix(tag, group));
+  b.addEventListener('click', () => toggleChatTag(tag));
   return b;
 }
 
@@ -248,7 +252,7 @@ function paintThread(scroll) {
   if (!msgs.length && !S.pending) {
     const hint = el('div', 'tg-empty');
     hint.append(el('h2', null, 'Tag assistant'));
-    hint.append(el('p', null, 'Describe the music you want - a mood, a scene, a use, a reference - or drop a picture: the assistant reads its vibe. It answers with genre, mood and sound tags to mix. Music only.'));
+    hint.append(el('p', null, 'Describe the music you want - a mood, a scene, a use, a reference - or drop a picture: the assistant reads its vibe. It answers with genre, mood and sound tags - they show in the Music tab too. Music only.'));
     host.append(hint);
   }
   msgs.forEach((m, i) => {
@@ -276,6 +280,7 @@ function paintThread(scroll) {
   if (S.pending) host.append(el('div', 'tg-msg is-agent tg-wait', _status()));
   $('tg-send').disabled = !!S.pending;
   if (scroll || keepBottom) host.scrollTop = host.scrollHeight;
+  paintPicked();
 }
 
 // ── Waiting for an answer ───────────────────────────────────────────────────
@@ -325,6 +330,7 @@ async function send() {
     S.pics = [];
     paintPics();
     _grow();
+    if (S.open !== r.id) S.picked = [];
     S.open = r.id;
     remember({ tagsChat: r.id });
     const c = await api('/api/tags/chats/' + encodeURIComponent(r.id));
@@ -412,29 +418,62 @@ function _dropPictures() {
   });
 }
 
-// ── The Mix ─────────────────────────────────────────────────────────────────
+// ── The picked tags (the chat's, phase 9) ──────────────────────────────────
 
 let saveTimer = 0;
+let told = '';
 
-function _saveMix() {
+function _savePicked() {
   clearTimeout(saveTimer);
+  const id = S.open;
+  const tags = S.picked.slice();
   saveTimer = setTimeout(async () => {
-    try { S.mix = (await api('/api/tags/mix', { method: 'PUT', body: { tags: S.mix } })).tags || []; } catch (e) { showError(e.message); }
+    try {
+      const r = await api('/api/tags/chats/' + encodeURIComponent(id) + '/picked', { method: 'PUT', body: { tags } });
+      if (S.open === id && S.chat) S.chat.picked = r.picked;
+    } catch (e) { showError(e.message); }
   }, 250);
 }
 
-// The picked tags show only on their chips in the answers (the owner, 2026-11-12: no Mix row); the Music tab follows
-// them as "From Tags".
-function paintMix() {
-  window.dispatchEvent(new CustomEvent('ms:mix', { detail: S.mix.slice() }));
-  for (const c of document.querySelectorAll('.tg-thread .chip')) c.classList.toggle('is-on', S.mix.some(t => t.tag === c.dataset.tag));
+/**
+ * The open chat's tags for the Music tab: every tag its answers gave, each once (the first answer's group and words
+ * for it), and which are picked. null - no chat open, or a new one with no message yet.
+ */
+export function chatTags() {
+  if (!S.open || !S.chat) return null;
+  const tags = [];
+  const seen = new Set();
+  for (const m of S.chat.messages || []) {
+    if (m.role !== 'assistant' || !m.chips) continue;
+    for (const [g] of GROUPS) {
+      for (const c of m.chips[g] || []) {
+        if (!c || !c.tag || seen.has(c.tag)) continue;
+        seen.add(c.tag);
+        tags.push({ tag: c.tag, group: g, why: c.why || '' });
+      }
+    }
+  }
+  const listed = S.chats.find(c => c.id === S.open);
+  return { id: S.open, title: (listed && listed.title) || S.chat.title || '', tags, picked: S.picked.filter(t => seen.has(t)) };
 }
 
-function toggleMix(tag, group) {
-  const i = S.mix.findIndex(t => t.tag === tag);
-  if (i >= 0) S.mix.splice(i, 1); else S.mix.push({ tag, group });
-  paintMix();
-  _saveMix();
+/** A tag of the open chat picked, or let go - here or in the Music tab, the same. */
+export function toggleChatTag(tag) {
+  if (!S.open) return;
+  const i = S.picked.indexOf(tag);
+  if (i >= 0) S.picked.splice(i, 1); else S.picked.push(tag);
+  paintPicked();
+  _savePicked();
+}
+
+// The chips of the answers lit as picked, and the Music tab told - only when something it shows has changed.
+function paintPicked() {
+  for (const c of document.querySelectorAll('.tg-thread .chip')) c.classList.toggle('is-on', S.picked.includes(c.dataset.tag));
+  const now = chatTags();
+  const sig = JSON.stringify(now);
+  if (sig === told) return;
+  told = sig;
+  window.dispatchEvent(new CustomEvent('ms:tags-chat', { detail: now }));
 }
 
 // ── Start ───────────────────────────────────────────────────────────────────
@@ -448,12 +487,6 @@ export async function initTags() {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); }
   });
-  try {
-    S.mix = (await api('/api/tags/mix')).tags || [];
-  } catch (e) {
-    showError(e.message);
-  }
-  paintMix();
   await loadChats();
   const last = remembered().tagsChat;
   if (last && S.chats.some(c => c.id === last)) await open(last); else paintThread();
