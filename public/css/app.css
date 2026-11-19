@@ -270,11 +270,6 @@ body.is-dragging-h { cursor: row-resize; }
 .mu-text-body { margin: 6px 0; white-space: pre-wrap; font: 11px/1.5 var(--mono); max-height: 220px; overflow: auto; }
 .mu-ljob { display: flex; flex-direction: column; gap: 3px; }
 .mu-ljob-head { color: var(--muted); }
-.mu-recent { flex: 0 0 auto; display: flex; align-items: center; gap: 14px; padding: 4px 12px; color: var(--faint); white-space: nowrap; overflow-x: auto; border-top: 1px solid var(--line); }
-.mu-rc { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
-.mu-rc.is-failed { color: var(--danger); }
-.mu-rplay { padding: 0 2px; border: 0; background: none; color: var(--ink); cursor: pointer; font-weight: 600; }
-.mu-rplay:hover { text-decoration: underline; }
 .mu-meta { flex: 0 0 auto; display: flex; justify-content: space-between; gap: 12px; padding: 0 12px 6px; color: var(--faint); }
 .mu-meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

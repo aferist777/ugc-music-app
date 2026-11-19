@@ -171,13 +171,6 @@ function _guardDrops() {
   }
 }
 
-/** A track of the library into the player, playing (the Music tab's Recent). */
-export function playTrack(root, rel, name, dur) {
-  if (!L.player) return;
-  const base = String(name || rel.split('/').pop()).replace(/\.[^.]+$/, '');
-  L.player.load(root, { rel, name: name || rel.split('/').pop(), base, duration: dur || 0, kind: 'music' }, { play: true });
-}
-
 /** The folder a file lies in opens with the file picked. */
 export async function revealFile(root, rel) {
   try {

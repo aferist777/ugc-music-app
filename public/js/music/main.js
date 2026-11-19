@@ -3,7 +3,8 @@
 // Suno, music only: Simple (the default), Custom, Lyrics. Phase 9 (the owner's B4): one row of three group buttons -
 // Genre, Mood, Sound - each showing or hiding its row of chips under it, any of them at once; under them the TAGS OF
 // THE CHAT OPEN IN THE TAGS TAB, every one once, picked by a press here or there alike (tags/main.js `chatTags`,
-// `toggleChatTag`); the options in rows; Recent; at the bottom the mode's main field with Generate on its
+// `toggleChatTag`); the options in rows (no Recent row since the owner's word, 2026-11-19 - Jobs shows the presses); at
+// the bottom the mode's main field with Generate on its
 // right (Simple: your words, Custom: the style, Lyrics: the idea) and, small under it, where the tracks go - the Music
 // folder selected in the library, else Music's root - and the price. A press is the server's from the moment it is made
 // (lib/jobs.js): this page only follows the journal (jobs-store.js).
@@ -15,7 +16,6 @@ import { openMenu } from '../menu.js';
 import { CHIPS } from './chips.js';
 import { chatTags, toggleChatTag } from '../tags/main.js';
 import * as JOBS from './jobs-store.js';
-import { playTrack, revealFile } from '../library/main.js';
 
 const LS = 'ms_music_v1';
 const GROUPS = [['genre', 'Genre'], ['mood', 'Mood'], ['sound', 'Sound']];
@@ -29,6 +29,7 @@ const MAIN = {
 const DEF = {
   mode: 'simple', model: 'V6',
   groups: [],      // the chip groups shown - their rows under the group buttons
+  project: null,   // the project last open on the timeline - another one empties the main fields
   simple: { picked: { genre: [], mood: [], sound: [] }, words: '', about: '', instrumental: true, writer: true, seconds: '' },
   custom: { title: '', style: '', instrumental: false, lyrics: '', vocal: '', negative: '', styleWeight: '', weirdness: '', variety: '', writer: false, seconds: '' },
   lyrics: { idea: '' },
@@ -41,7 +42,7 @@ function _load() {
   let s = {};
   try { s = JSON.parse(localStorage.getItem(LS)) || {}; } catch { /* defaults */ }
   const out = clone(DEF);
-  for (const k of ['mode', 'model']) if (s[k]) out[k] = s[k];
+  for (const k of ['mode', 'model', 'project']) if (s[k]) out[k] = s[k];
   for (const k of ['simple', 'custom', 'lyrics']) Object.assign(out[k], s[k] || {});
   delete out.simple.mixOff;
   out.groups = (Array.isArray(s.groups) ? s.groups : []).filter(g => GROUPS.some(x => x[0] === g));
@@ -56,7 +57,7 @@ let folder = { root: 'music', rel: '' };
 let info = { models: ['V6', 'V6_MINI', 'V6_WILD'], prices: {}, fake: false };
 let saved = [];
 let keepTimer = 0;
-let headBox, bodyBox, recentBox, askBox, metaBox, mainIn, goBtn;
+let headBox, bodyBox, askBox, metaBox, mainIn, goBtn;
 
 function keep() {
   clearTimeout(keepTimer);
@@ -391,7 +392,7 @@ async function loadSaved() {
   if (bodyBox && S.mode !== 'simple') paintBody();
 }
 
-// ── Head, Recent, the main field and the line under it ─────────────────────
+// ── Head, the main field and the line under it ─────────────────────────────
 
 function setMode(m) {
   S.mode = m;
@@ -444,37 +445,6 @@ function _state(j) {
   return 'done';
 }
 
-function paintRecent() {
-  recentBox.textContent = '';
-  const list = JOBS.current().filter(j => j.kind === 'music').slice(0, 8);
-  recentBox.hidden = !list.length;
-  if (!list.length) return;
-  recentBox.append(el('span', null, 'Recent'));
-  for (const j of list) {
-    const c = el('span', 'mu-rc' + (j.state === 'failed' ? ' is-failed' : ''));
-    c.title = j.label;
-    c.append(document.createTextNode((j.written && j.written.title) || j.label));
-    if (j.state === 'done') {
-      for (const r of j.results || []) {
-        const b = el('button', 'mu-rplay', '▶' + r.n);
-        b.draggable = true;
-        b.addEventListener('dragstart', (e) => { window.msDrag = { root: 'music', rels: [r.rel] }; e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', r.name); });
-        b.addEventListener('dragend', () => { window.msDrag = null; });
-        b.title = 'Play ' + r.name;
-        b.addEventListener('click', () => playTrack('music', r.rel, r.name, r.dur));
-        c.append(b);
-      }
-      const show = el('button', 'link', 'show');
-      show.addEventListener('click', () => { const r = (j.results || [])[0]; if (r) revealFile('music', r.rel); });
-      c.append(show);
-    } else {
-      c.append(document.createTextNode(' — ' + (j.state === 'pending' ? _state(j) : 'failed')));
-      if (j.state === 'failed') c.title = j.error;
-    }
-    recentBox.append(c);
-  }
-}
-
 function _grow() {
   mainIn.style.height = 'auto';
   mainIn.style.height = Math.min(mainIn.scrollHeight + 2, 120) + 'px';
@@ -519,7 +489,7 @@ async function generate() {
   try {
     const r = await api('/api/music/gen', { method: 'POST', body });
     JOBS.put(r.job);
-    showToast(S.mode === 'lyrics' ? 'Asked - the texts appear here in a minute.' : 'Asked - follow it in Recent and Jobs.');
+    showToast(S.mode === 'lyrics' ? 'Asked - the texts appear here in a minute.' : 'Asked - follow it in Jobs.');
   } catch (e) {
     showError(e.message);
   } finally {
@@ -530,7 +500,6 @@ async function generate() {
 function paintAll() {
   paintHead();
   paintBody();
-  paintRecent();
   paintAsk();
   paintMeta();
 }
@@ -542,7 +511,6 @@ export async function initMusic() {
   host.textContent = '';
   headBox = el('div', 'mu-head');
   bodyBox = el('div', 'mu-body');
-  recentBox = el('div', 'mu-recent');
   askBox = el('form', 'ask');
   mainIn = el('textarea', 'ask-in');
   mainIn.rows = 1;
@@ -551,13 +519,27 @@ export async function initMusic() {
   goBtn.type = 'submit';
   askBox.append(mainIn, goBtn);
   metaBox = el('div', 'mu-meta');
-  host.append(headBox, bodyBox, recentBox, askBox, metaBox);
+  host.append(headBox, bodyBox, askBox, metaBox);
 
   mainIn.addEventListener('input', () => { S[S.mode][MAIN[S.mode].key] = mainIn.value; keep(); _grow(); });
   mainIn.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); generate(); }
   });
   askBox.addEventListener('submit', (e) => { e.preventDefault(); generate(); });
+  // The field's height follows its width too: measured while the window was narrow, it stayed tall when it widened.
+  let askWidth = 0;
+  new ResizeObserver(() => { if (askBox.clientWidth !== askWidth) { askWidth = askBox.clientWidth; _grow(); } }).observe(askBox);
+  // ANOTHER project opened on the timeline (the owner, 2026-11-19): the field beside Generate starts empty in every mode
+  // - your words, the style with the tags put into it, the idea. The same project read again changes nothing.
+  window.addEventListener('ms:project-opened', (e) => {
+    const id = e.detail && e.detail.id;
+    if (!id || id === S.project) return;
+    const was = S.project;
+    S.project = id;
+    if (was) for (const [mode, m] of Object.entries(MAIN)) S[mode][m.key] = '';
+    keep();
+    if (was) paintAsk();
+  });
 
   try { info = await api('/api/music/info'); } catch { /* the defaults */ }
   window.addEventListener('ms:keys', async () => {
@@ -572,7 +554,6 @@ export async function initMusic() {
   window.addEventListener('ms:folder', (e) => { folder = e.detail || folder; paintMeta(); });
   let lyricsSeen = '';
   JOBS.subscribe((jobs) => {
-    paintRecent();
     // Lyrics just written show in the Lyrics mode at once (drawn again only when a state changes).
     const ly = jobs.filter(j => j.kind === 'lyrics').map(j => j.id + j.state).join();
     if (S.mode === 'lyrics' && ly !== lyricsSeen) { lyricsSeen = ly; paintBody(); }
@@ -580,7 +561,6 @@ export async function initMusic() {
   // The seconds of what is being made tick on; nothing with a field in it is drawn again.
   setInterval(() => {
     if (!JOBS.current().some(j => j.state === 'pending')) return;
-    paintRecent();
     for (const h of bodyBox.querySelectorAll('.mu-ljob-head')) {
       const j = JOBS.current().find(x => x.id === h.dataset.id);
       if (j) h.textContent = j.label + ' · ' + _state(j);
