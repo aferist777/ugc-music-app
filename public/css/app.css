@@ -270,8 +270,8 @@ body.is-dragging-h { cursor: row-resize; }
 .mu-text-body { margin: 6px 0; white-space: pre-wrap; font: 11px/1.5 var(--mono); max-height: 220px; overflow: auto; }
 .mu-ljob { display: flex; flex-direction: column; gap: 3px; }
 .mu-ljob-head { color: var(--muted); }
-.mu-meta { flex: 0 0 auto; display: flex; justify-content: space-between; gap: 12px; padding: 0 12px 6px; color: var(--faint); }
-.mu-meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mu-go { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.mu-price { color: var(--faint); font-size: 11px; white-space: nowrap; }
 
 /* ── Images and Animate (phase 5): settings on the left, one chat on the right ── */
 .panel.vz { display: flex; overflow: hidden; position: relative; }

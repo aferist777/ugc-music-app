@@ -4,10 +4,10 @@
 // Genre, Mood, Sound - each showing or hiding its row of chips under it, any of them at once; under them the TAGS OF
 // THE CHAT OPEN IN THE TAGS TAB, every one once, picked by a press here or there alike (tags/main.js `chatTags`,
 // `toggleChatTag`); the options in rows (no Recent row since the owner's word, 2026-11-19 - Jobs shows the presses); at
-// the bottom the mode's main field with Generate on its
-// right (Simple: your words, Custom: the style, Lyrics: the idea) and, small under it, where the tracks go - the Music
-// folder selected in the library, else Music's root - and the price. A press is the server's from the moment it is made
-// (lib/jobs.js): this page only follows the journal (jobs-store.js).
+// the bottom the mode's main field with Generate on its right (Simple: your words, Custom: the style, Lyrics: the idea)
+// and the price small over Generate (the owner, 2026-11-19: no line under the field). The tracks go into the Music
+// folder selected in the library, else Music's root. A press is the server's from the moment it is made (lib/jobs.js):
+// this page only follows the journal (jobs-store.js).
 // ════════════════════════════════════════════════════════════════════════════
 
 import { api } from '../api.js';
@@ -57,7 +57,7 @@ let folder = { root: 'music', rel: '' };
 let info = { models: ['V6', 'V6_MINI', 'V6_WILD'], prices: {}, fake: false };
 let saved = [];
 let keepTimer = 0;
-let headBox, bodyBox, askBox, metaBox, mainIn, goBtn;
+let headBox, bodyBox, askBox, priceEl, mainIn, goBtn;
 
 function keep() {
   clearTimeout(keepTimer);
@@ -460,15 +460,10 @@ function paintAsk() {
   _grow();
 }
 
-function paintMeta() {
-  metaBox.textContent = '';
-  const into = el('span');
-  if (S.mode === 'lyrics') into.textContent = 'texts only · Save keeps one';
-  else into.textContent = 'into ' + (folder.root === 'music' && folder.rel ? 'Music / ' + folder.rel.split('/').join(' / ') : 'Music');
-  into.title = 'The tracks go into the Music folder selected in the library; none selected - the root of Music.';
+// The price of a press, small over Generate.
+function paintPrice() {
   const p = info.prices[S.mode];
-  const price = el('span', null, p ? '$' + p.usd + ' · ' + p.note + (info.fake ? ' · FAKE' : '') : '');
-  metaBox.append(into, price);
+  priceEl.textContent = p ? '$' + p.usd + ' · ' + p.note + (info.fake ? ' · FAKE' : '') : '';
 }
 
 async function generate() {
@@ -501,7 +496,7 @@ function paintAll() {
   paintHead();
   paintBody();
   paintAsk();
-  paintMeta();
+  paintPrice();
 }
 
 // ── Start ───────────────────────────────────────────────────────────────────
@@ -517,9 +512,11 @@ export async function initMusic() {
   mainIn.spellcheck = false;
   goBtn = el('button', 'btn primary', 'Generate');
   goBtn.type = 'submit';
-  askBox.append(mainIn, goBtn);
-  metaBox = el('div', 'mu-meta');
-  host.append(headBox, bodyBox, askBox, metaBox);
+  priceEl = el('span', 'mu-price');
+  const goCol = el('div', 'mu-go');
+  goCol.append(priceEl, goBtn);
+  askBox.append(mainIn, goCol);
+  host.append(headBox, bodyBox, askBox);
 
   mainIn.addEventListener('input', () => { S[S.mode][MAIN[S.mode].key] = mainIn.value; keep(); _grow(); });
   mainIn.addEventListener('keydown', (e) => {
@@ -551,7 +548,7 @@ export async function initMusic() {
     chat = e.detail || null;
     if (S.mode !== 'lyrics') paintBody();
   });
-  window.addEventListener('ms:folder', (e) => { folder = e.detail || folder; paintMeta(); });
+  window.addEventListener('ms:folder', (e) => { folder = e.detail || folder; });
   let lyricsSeen = '';
   JOBS.subscribe((jobs) => {
     // Lyrics just written show in the Lyrics mode at once (drawn again only when a state changes).
